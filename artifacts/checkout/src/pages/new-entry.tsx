@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { useCreateEntry } from "@workspace/api-client-react";
@@ -54,6 +54,32 @@ export default function NewEntry() {
       }
     );
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // ⌘↵ / Ctrl+↵ → save
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (!isSaving) handleSave();
+        return;
+      }
+
+      // Esc → cancel (only when not focused in a text field)
+      if (e.key === "Escape") {
+        const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
+        if (tag !== "textarea" && tag !== "input") {
+          setLocation("/");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSaving, answers]);
+
+  const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.platform);
+  const modKey = isMac ? "⌘↵" : "Ctrl+↵";
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out fill-mode-both pb-20">
@@ -142,6 +168,11 @@ export default function NewEntry() {
           Save Entry
         </Button>
       </div>
+
+      {/* Keyboard hint */}
+      <p className="text-center text-xs text-muted-foreground/50 tracking-wide select-none -mt-2">
+        Tab between fields  ·  {modKey} save
+      </p>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
 import { format, parseISO } from "date-fns";
 import {
@@ -21,7 +21,6 @@ export default function EntryDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  // Reset editing state whenever we navigate to a different entry
   useEffect(() => {
     setIsEditing(false);
   }, [id]);
@@ -30,13 +29,11 @@ export default function EntryDetail() {
     query: { enabled: !!id, queryKey: ["/api/journal/entries", id] },
   });
 
-  // Load the full list so we can find this entry's neighbors
   const { data: allEntries } = useListEntries(
     {},
     { query: { queryKey: ["/api/journal/entries"] } }
   );
 
-  // Entries are returned reverse-chronological (newest first)
   const currentIndex = allEntries?.findIndex((e) => e.id === id) ?? -1;
   const newerEntry = currentIndex > 0 ? allEntries![currentIndex - 1] : null;
   const olderEntry =
@@ -55,7 +52,7 @@ export default function EntryDetail() {
     }
   }, [entry, isEditing]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (!entry) return;
     const formattedAnswers = entry.answers.map((a) => ({
       promptId: a.promptId,
@@ -78,7 +75,51 @@ export default function EntryDetail() {
         },
       }
     );
-  };
+  }, [entry, answers, id, updateEntry, toast]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
+      const inField = tag === "input" || tag === "textarea" || tag === "select";
+
+      // ⌘↵ / Ctrl+↵ → save when editing
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (isEditing && !isSaving) handleSave();
+        return;
+      }
+
+      // Esc → cancel editing
+      if (e.key === "Escape" && isEditing) {
+        e.preventDefault();
+        setIsEditing(false);
+        return;
+      }
+
+      if (inField) return;
+
+      // E → enter edit mode
+      if (e.key === "e" && !isEditing) {
+        e.preventDefault();
+        setIsEditing(true);
+        return;
+      }
+
+      // ← → navigate
+      if (e.key === "ArrowLeft" && olderEntry) {
+        e.preventDefault();
+        setLocation(`/entry/${olderEntry.id}`);
+      }
+      if (e.key === "ArrowRight" && newerEntry) {
+        e.preventDefault();
+        setLocation(`/entry/${newerEntry.id}`);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isEditing, isSaving, olderEntry, newerEntry, handleSave, setLocation]);
 
   if (error) {
     return (
@@ -101,6 +142,9 @@ export default function EntryDetail() {
       </div>
     );
   }
+
+  const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.platform);
+  const modKey = isMac ? "⌘↵" : "Ctrl+↵";
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
@@ -167,12 +211,12 @@ export default function EntryDetail() {
                     }
                     className="w-full"
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="grid grid-cols-3 text-xs text-muted-foreground">
                     <span>1 — Distracted</span>
-                    <span className="text-primary font-semibold text-sm font-serif">
+                    <span className="text-primary font-semibold text-sm font-serif text-center">
                       {answers[answer.promptId] || answer.answer || 5}
                     </span>
-                    <span>10 — Present</span>
+                    <span className="text-right">10 — Present</span>
                   </div>
                 </div>
               ) : (
@@ -243,6 +287,23 @@ export default function EntryDetail() {
           )}
         </div>
       )}
+
+      {/* Keyboard hint */}
+      <div className="text-center">
+        {!isEditing ? (
+          <p className="text-xs text-muted-foreground/50 tracking-wide select-none">
+            {olderEntry && "← older"}
+            {olderEntry && newerEntry && "  ·  "}
+            {newerEntry && "newer →"}
+            {(olderEntry || newerEntry) && "  ·  "}
+            E edit
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground/50 tracking-wide select-none">
+            Esc cancel  ·  {modKey} save
+          </p>
+        )}
+      </div>
     </div>
   );
 }
