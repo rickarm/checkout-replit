@@ -40,7 +40,7 @@ export const THEMES: Theme[] = [
   },
   {
     id: "terminal",
-    name: "Terminal",
+    name: "PS/2",
     description: "Amber phosphor on black. IBM PS/2, circa 1990.",
     preview: {
       bg: "hsl(28 22% 5%)",
