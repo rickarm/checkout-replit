@@ -34,15 +34,24 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 Checkout is a calm personal journaling web app. Journal entries are **not** stored in a database — the product philosophy is user-owned portable data (markdown files). The app is currently built on mocked in-memory data with clear integration seams.
 
+### Authentication
+
+Clerk auth is integrated. Each user's journal entries and settings are fully scoped by their Clerk userId in `journalRepository.ts`. All API routes under `/api/journal/*` require a valid Clerk session (401 otherwise).
+
+- Public routes: `/` (landing), `/sign-in`, `/sign-up`
+- Protected routes: all journal pages — redirect to `/` if signed out
+- Sign-out → redirects to the landing page
+- To manage users, configure login providers, or update branding: use the **Auth pane** in the workspace toolbar
+
 ### Current Mocked Architecture
 
 ```
 artifacts/
   checkout/           # React + Vite frontend
     src/
-      pages/          # NewEntry, Home (Journal List), EntryDetail, Settings
-      components/     # Shared UI components
-      App.tsx         # Router setup
+      pages/          # Landing, NewEntry, Home (Journal List), EntryDetail, Settings, SignIn, SignUp
+      components/     # Shared UI components (Layout includes user info + sign-out)
+      App.tsx         # ClerkProvider + router setup
 
 artifacts/
   api-server/

@@ -1,4 +1,5 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
+import { getAuth } from "@clerk/express";
 import { journalRepository } from "../lib/journalRepository.js";
 import {
   ListEntriesQueryParams,
@@ -11,10 +12,32 @@ import {
 
 export const journalRouter = Router();
 
+// Extend Express Request to carry userId
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+    }
+  }
+}
+
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const auth = getAuth(req);
+  const userId = auth?.userId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  req.userId = userId;
+  next();
+}
+
+journalRouter.use(requireAuth);
+
 journalRouter.get("/entries", (req, res) => {
   const parseResult = ListEntriesQueryParams.safeParse(req.query);
   const params = parseResult.success ? parseResult.data : {};
-  const entries = journalRepository.listEntries(params);
+  const entries = journalRepository.listEntries(req.userId!, params);
   res.json(entries);
 });
 
@@ -24,7 +47,7 @@ journalRouter.post("/entries", (req, res) => {
     res.status(400).json({ error: parseResult.error.message });
     return;
   }
-  const entry = journalRepository.createEntry(parseResult.data);
+  const entry = journalRepository.createEntry(req.userId!, parseResult.data);
   res.status(201).json(entry);
 });
 
@@ -34,7 +57,7 @@ journalRouter.get("/entries/:id", (req, res) => {
     res.status(400).json({ error: "Invalid entry id" });
     return;
   }
-  const entry = journalRepository.getEntry(parseResult.data.id);
+  const entry = journalRepository.getEntry(req.userId!, parseResult.data.id);
   if (!entry) {
     res.status(404).json({ error: "Entry not found" });
     return;
@@ -53,7 +76,7 @@ journalRouter.put("/entries/:id", (req, res) => {
     res.status(400).json({ error: bodyResult.error.message });
     return;
   }
-  const entry = journalRepository.updateEntry(paramsResult.data.id, bodyResult.data);
+  const entry = journalRepository.updateEntry(req.userId!, paramsResult.data.id, bodyResult.data);
   if (!entry) {
     res.status(404).json({ error: "Entry not found" });
     return;
@@ -61,13 +84,13 @@ journalRouter.put("/entries/:id", (req, res) => {
   res.json(entry);
 });
 
-journalRouter.get("/summary", (_req, res) => {
-  const summary = journalRepository.getSummary();
+journalRouter.get("/summary", (req, res) => {
+  const summary = journalRepository.getSummary(req.userId!);
   res.json(summary);
 });
 
-journalRouter.get("/settings", (_req, res) => {
-  const settings = journalRepository.getSettings();
+journalRouter.get("/settings", (req, res) => {
+  const settings = journalRepository.getSettings(req.userId!);
   res.json(settings);
 });
 
@@ -77,6 +100,6 @@ journalRouter.put("/settings", (req, res) => {
     res.status(400).json({ error: parseResult.error.message });
     return;
   }
-  const settings = journalRepository.updateSettings(parseResult.data);
+  const settings = journalRepository.updateSettings(req.userId!, parseResult.data);
   res.json(settings);
 });
