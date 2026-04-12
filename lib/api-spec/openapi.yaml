@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: journal
+    description: Journal entry operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,151 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /journal/entries:
+    get:
+      operationId: listEntries
+      tags: [journal]
+      summary: List journal entries
+      description: Returns all journal entries in reverse chronological order
+      parameters:
+        - name: month
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Filter by month (YYYY-MM format)
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Search query
+      responses:
+        "200":
+          description: List of entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JournalEntry"
+    post:
+      operationId: createEntry
+      tags: [journal]
+      summary: Create a new journal entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEntryBody"
+      responses:
+        "201":
+          description: Created entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+
+  /journal/entries/{id}:
+    get:
+      operationId: getEntry
+      tags: [journal]
+      summary: Get a journal entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The journal entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+        "404":
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateEntry
+      tags: [journal]
+      summary: Update a journal entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEntryBody"
+      responses:
+        "200":
+          description: Updated entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+        "404":
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /journal/summary:
+    get:
+      operationId: getJournalSummary
+      tags: [journal]
+      summary: Get journal summary stats
+      description: Returns aggregate stats like entry count, streaks, months with entries
+      responses:
+        "200":
+          description: Journal summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalSummary"
+
+  /journal/settings:
+    get:
+      operationId: getStorageSettings
+      tags: [journal]
+      summary: Get storage settings
+      responses:
+        "200":
+          description: Current storage settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageSettings"
+    put:
+      operationId: updateStorageSettings
+      tags: [journal]
+      summary: Update storage settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorageSettings"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageSettings"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +181,139 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    PromptAnswer:
+      type: object
+      properties:
+        promptId:
+          type: string
+        promptText:
+          type: string
+        answer:
+          type: string
+      required:
+        - promptId
+        - promptText
+        - answer
+
+    JournalEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          description: ISO date string (YYYY-MM-DD)
+        template:
+          type: string
+          default: "daily-reflection"
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PromptAnswer"
+        markdown:
+          type: string
+          description: Full rendered markdown of the entry
+        createdAt:
+          type: string
+          description: ISO timestamp
+        updatedAt:
+          type: string
+          description: ISO timestamp
+        source:
+          $ref: "#/components/schemas/EntrySource"
+      required:
+        - id
+        - date
+        - template
+        - answers
+        - markdown
+        - createdAt
+        - updatedAt
+        - source
+
+    EntrySource:
+      type: object
+      properties:
+        backend:
+          type: string
+          enum: ["local", "google-drive", "mock"]
+        path:
+          type: string
+      required:
+        - backend
+
+    CreateEntryBody:
+      type: object
+      properties:
+        date:
+          type: string
+        template:
+          type: string
+          default: "daily-reflection"
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PromptAnswer"
+      required:
+        - date
+        - answers
+
+    UpdateEntryBody:
+      type: object
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PromptAnswer"
+        markdown:
+          type: string
+      required:
+        - answers
+
+    JournalSummary:
+      type: object
+      properties:
+        totalEntries:
+          type: integer
+        currentStreak:
+          type: integer
+        longestStreak:
+          type: integer
+        activeMonths:
+          type: array
+          items:
+            type: string
+          description: List of months with entries (YYYY-MM format)
+        averagePresenceScore:
+          type: number
+          description: Average presence score (1-10) across all entries
+      required:
+        - totalEntries
+        - currentStreak
+        - longestStreak
+        - activeMonths
+        - averagePresenceScore
+
+    StorageSettings:
+      type: object
+      properties:
+        backend:
+          type: string
+          enum: ["local", "google-drive", "mock"]
+          default: "mock"
+        localPath:
+          type: string
+          description: Path for local file storage
+        googleDriveFolderId:
+          type: string
+          description: Google Drive folder ID (future use)
+      required:
+        - backend

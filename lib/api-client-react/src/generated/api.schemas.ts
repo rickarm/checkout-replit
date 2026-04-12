@@ -8,3 +8,91 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export interface PromptAnswer {
+  promptId: string;
+  promptText: string;
+  answer: string;
+}
+
+export type EntrySourceBackend =
+  (typeof EntrySourceBackend)[keyof typeof EntrySourceBackend];
+
+export const EntrySourceBackend = {
+  local: "local",
+  "google-drive": "google-drive",
+  mock: "mock",
+} as const;
+
+export interface EntrySource {
+  backend: EntrySourceBackend;
+  path?: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  /** ISO date string (YYYY-MM-DD) */
+  date: string;
+  template: string;
+  answers: PromptAnswer[];
+  /** Full rendered markdown of the entry */
+  markdown: string;
+  /** ISO timestamp */
+  createdAt: string;
+  /** ISO timestamp */
+  updatedAt: string;
+  source: EntrySource;
+}
+
+export interface CreateEntryBody {
+  date: string;
+  template?: string;
+  answers: PromptAnswer[];
+}
+
+export interface UpdateEntryBody {
+  answers: PromptAnswer[];
+  markdown?: string;
+}
+
+export interface JournalSummary {
+  totalEntries: number;
+  currentStreak: number;
+  longestStreak: number;
+  /** List of months with entries (YYYY-MM format) */
+  activeMonths: string[];
+  /** Average presence score (1-10) across all entries */
+  averagePresenceScore: number;
+}
+
+export type StorageSettingsBackend =
+  (typeof StorageSettingsBackend)[keyof typeof StorageSettingsBackend];
+
+export const StorageSettingsBackend = {
+  local: "local",
+  "google-drive": "google-drive",
+  mock: "mock",
+} as const;
+
+export interface StorageSettings {
+  backend: StorageSettingsBackend;
+  /** Path for local file storage */
+  localPath?: string;
+  /** Google Drive folder ID (future use) */
+  googleDriveFolderId?: string;
+}
+
+export type ListEntriesParams = {
+  /**
+   * Filter by month (YYYY-MM format)
+   */
+  month?: string;
+  /**
+   * Search query
+   */
+  search?: string;
+};

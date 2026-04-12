@@ -6,4 +6,15 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./createEntryBody";
+export * from "./entrySource";
+export * from "./entrySourceBackend";
+export * from "./errorResponse";
 export * from "./healthStatus";
+export * from "./journalEntry";
+export * from "./journalSummary";
+export * from "./listEntriesParams";
+export * from "./promptAnswer";
+export * from "./storageSettings";
+export * from "./storageSettingsBackend";
+export * from "./updateEntryBody";

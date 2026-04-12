@@ -14,3 +14,182 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns all journal entries in reverse chronological order
+ * @summary List journal entries
+ */
+export const ListEntriesQueryParams = zod.object({
+  month: zod.coerce.string().optional(),
+  search: zod.coerce.string().optional(),
+});
+
+export const listEntriesResponseTemplateDefault = `daily-reflection`;
+
+export const ListEntriesResponseItem = zod.object({
+  id: zod.string(),
+  date: zod.string().describe("ISO date string (YYYY-MM-DD)"),
+  template: zod.string().default(listEntriesResponseTemplateDefault),
+  answers: zod.array(
+    zod.object({
+      promptId: zod.string(),
+      promptText: zod.string(),
+      answer: zod.string(),
+    }),
+  ),
+  markdown: zod.string().describe("Full rendered markdown of the entry"),
+  createdAt: zod.string().describe("ISO timestamp"),
+  updatedAt: zod.string().describe("ISO timestamp"),
+  source: zod.object({
+    backend: zod.enum(["local", "google-drive", "mock"]),
+    path: zod.string().optional(),
+  }),
+});
+export const ListEntriesResponse = zod.array(ListEntriesResponseItem);
+
+/**
+ * @summary Create a new journal entry
+ */
+export const createEntryBodyTemplateDefault = `daily-reflection`;
+
+export const CreateEntryBody = zod.object({
+  date: zod.string(),
+  template: zod.string().default(createEntryBodyTemplateDefault),
+  answers: zod.array(
+    zod.object({
+      promptId: zod.string(),
+      promptText: zod.string(),
+      answer: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary Get a journal entry
+ */
+export const GetEntryParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const getEntryResponseTemplateDefault = `daily-reflection`;
+
+export const GetEntryResponse = zod.object({
+  id: zod.string(),
+  date: zod.string().describe("ISO date string (YYYY-MM-DD)"),
+  template: zod.string().default(getEntryResponseTemplateDefault),
+  answers: zod.array(
+    zod.object({
+      promptId: zod.string(),
+      promptText: zod.string(),
+      answer: zod.string(),
+    }),
+  ),
+  markdown: zod.string().describe("Full rendered markdown of the entry"),
+  createdAt: zod.string().describe("ISO timestamp"),
+  updatedAt: zod.string().describe("ISO timestamp"),
+  source: zod.object({
+    backend: zod.enum(["local", "google-drive", "mock"]),
+    path: zod.string().optional(),
+  }),
+});
+
+/**
+ * @summary Update a journal entry
+ */
+export const UpdateEntryParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateEntryBody = zod.object({
+  answers: zod.array(
+    zod.object({
+      promptId: zod.string(),
+      promptText: zod.string(),
+      answer: zod.string(),
+    }),
+  ),
+  markdown: zod.string().optional(),
+});
+
+export const updateEntryResponseTemplateDefault = `daily-reflection`;
+
+export const UpdateEntryResponse = zod.object({
+  id: zod.string(),
+  date: zod.string().describe("ISO date string (YYYY-MM-DD)"),
+  template: zod.string().default(updateEntryResponseTemplateDefault),
+  answers: zod.array(
+    zod.object({
+      promptId: zod.string(),
+      promptText: zod.string(),
+      answer: zod.string(),
+    }),
+  ),
+  markdown: zod.string().describe("Full rendered markdown of the entry"),
+  createdAt: zod.string().describe("ISO timestamp"),
+  updatedAt: zod.string().describe("ISO timestamp"),
+  source: zod.object({
+    backend: zod.enum(["local", "google-drive", "mock"]),
+    path: zod.string().optional(),
+  }),
+});
+
+/**
+ * Returns aggregate stats like entry count, streaks, months with entries
+ * @summary Get journal summary stats
+ */
+export const GetJournalSummaryResponse = zod.object({
+  totalEntries: zod.number(),
+  currentStreak: zod.number(),
+  longestStreak: zod.number(),
+  activeMonths: zod
+    .array(zod.string())
+    .describe("List of months with entries (YYYY-MM format)"),
+  averagePresenceScore: zod
+    .number()
+    .describe("Average presence score (1-10) across all entries"),
+});
+
+/**
+ * @summary Get storage settings
+ */
+export const getStorageSettingsResponseBackendDefault = `mock`;
+
+export const GetStorageSettingsResponse = zod.object({
+  backend: zod
+    .enum(["local", "google-drive", "mock"])
+    .default(getStorageSettingsResponseBackendDefault),
+  localPath: zod.string().optional().describe("Path for local file storage"),
+  googleDriveFolderId: zod
+    .string()
+    .optional()
+    .describe("Google Drive folder ID (future use)"),
+});
+
+/**
+ * @summary Update storage settings
+ */
+export const updateStorageSettingsBodyBackendDefault = `mock`;
+
+export const UpdateStorageSettingsBody = zod.object({
+  backend: zod
+    .enum(["local", "google-drive", "mock"])
+    .default(updateStorageSettingsBodyBackendDefault),
+  localPath: zod.string().optional().describe("Path for local file storage"),
+  googleDriveFolderId: zod
+    .string()
+    .optional()
+    .describe("Google Drive folder ID (future use)"),
+});
+
+export const updateStorageSettingsResponseBackendDefault = `mock`;
+
+export const UpdateStorageSettingsResponse = zod.object({
+  backend: zod
+    .enum(["local", "google-drive", "mock"])
+    .default(updateStorageSettingsResponseBackendDefault),
+  localPath: zod.string().optional().describe("Path for local file storage"),
+  googleDriveFolderId: zod
+    .string()
+    .optional()
+    .describe("Google Drive folder ID (future use)"),
+});

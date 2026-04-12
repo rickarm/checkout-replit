@@ -1,0 +1,151 @@
+REPLIT PROMPT
+
+Build a clean v1 web app for my journaling tool called Checkout.
+
+Context:
+- Checkout already exists today as a Node.js CLI app that stores journal entries as markdown files.
+- A separate Phase 1 refactor is underway to create a shared service layer and storage abstraction.
+- For now, do NOT depend on that refactor being complete.
+- Instead, build the web app as a standalone shell using mocked data and clear integration seams.
+- This app should eventually support multiple storage backends, especially Google Drive.
+- The product philosophy is calm, structured reflection with portable user-owned data.
+
+Primary goal:
+Create a polished web app shell that I can click through and evaluate for UX and product direction, even before real storage is wired up.
+
+Requirements:
+1. Build a modern full-stack web app with a clean UI that works on desktop, tablet, and mobile interfaces
+2. Use mocked journal data for now
+3. Create obvious places where real services/storage can later plug in
+4. Do not build a mobile app
+5. Do not build Google Drive integration yet, but prepare the app for it
+6. Do not use a database as the canonical source of truth for journal entries
+7. Keep the design calm, minimal, and reflective rather than busy or “productivity app” feeling
+
+Screens to build:
+1. New Entry
+2. Journal List
+3. Entry Detail / Edit
+4. Settings / Storage
+
+Navigation:
+- Simple top nav or left nav with:
+  - New Entry
+  - Journal
+  - Settings
+
+UI requirements:
+- Calm, spacious layout
+- Excellent readability
+- Feels good on desktop and iPad-sized screens
+- Minimal but polished visual design
+- Avoid clutter
+- Journal writing experience should feel focused and grounded
+
+Functional requirements for v1:
+- New Entry screen:
+  - Show today’s date
+  - Show a small set of guided prompts; see below for specific prompts
+  - Include text areas for each prompt
+  - Save draft button
+  - Save entry button
+- Journal List screen:
+  - Reverse chronological list of entries
+  - Group or filter by month
+  - Search input stub is fine, even if mock-only
+  - Clicking an entry opens detail view
+- Entry Detail / Edit screen:
+  - Show entry contents in a readable layout
+  - Allow editing prompt answers
+  - Allow viewing rendered markdown or structured content
+- Settings screen:
+  - Show “Where should your journal live?”
+  - Present backend options:
+    - Local files
+    - Google Drive
+    - More options later
+  - Google Drive should be shown as “coming soon” or placeholder
+  - Include a folder-selection placeholder UI for future Google Drive support
+
+Entry Prompts:
+1. How present are you right now (1-10)?
+2. What was one moment of joy?
+3. What was one moment of frustration?
+4. Think of your values. One thing you did that aligns with a value?
+5. What are letting go of? What is not serving you anymore?
+
+Mock data:
+- Create a small realistic set of journal entries
+- Include fields like:
+  - id
+  - date
+  - template
+  - answers
+  - markdown
+  - createdAt
+  - updatedAt
+  - source.backend
+- Put the mock data in a clearly named location so it can later be replaced
+
+Architecture requirements:
+- Keep the code organized for future integration
+- Create:
+  - a shared JournalEntry type/interface
+  - a mock repository or mock service layer
+  - API route stubs or service functions for:
+    - listEntries
+    - getEntry
+    - createEntry
+    - updateEntry
+- Make it easy later to replace mocks with real services from the Checkout refactor
+- Separate UI components from data-access logic
+
+Important product constraints:
+- Journal entries should eventually remain portable and user-owned
+- Do not design the app around a proprietary database model
+- The storage abstraction should feel central to the product
+- This app will eventually support both power users and normal users
+- Google Drive is likely the first mainstream storage backend
+
+Settings copy:
+Use copy along these lines:
+- “Your journal lives in files you control.”
+- “Choose where Checkout stores your entries.”
+- “Google Drive keeps your journal portable.”
+You can improve the wording, but keep the same spirit.
+
+Suggested technical approach:
+- Choose a framework that works well in Replit for a modern web app
+- Prefer clear structure and maintainability over cleverness
+- Keep dependencies reasonable
+- Include comments only where helpful
+- Prepare environment variable placeholders for future auth/storage integration
+
+Please deliver:
+1. A working clickable prototype in Replit
+2. Clean project structure
+3. Mocked data and integration seams
+4. A short README section explaining:
+   - current mocked architecture
+   - where real services will plug in
+   - what to replace next when Phase 1 is done
+
+Nice-to-have:
+- Empty state for new users
+- Gentle onboarding copy
+- A subtle “connect Google Drive” placeholder button in Settings
+- A monthly grouping or timeline feel in the Journal view
+
+Do not:
+- overengineer
+- add real auth yet
+- add real Google APIs yet
+- add collaboration features
+- add analytics
+- add a heavy dashboard
+
+At the end, summarize:
+- what you built
+- project structure
+- where I should plug in the future shared journal-service
+- what the next implementation step should be once the Phase 1 refactor is complete
