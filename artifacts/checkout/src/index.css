@@ -140,6 +140,15 @@
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
+  /* Journal paper aesthetic tokens — Paper theme defaults */
+  --journal-paper-bg: hsl(38 40% 97%);
+  --journal-paper-border: hsl(30 20% 84%);
+  --journal-paper-shadow-1: hsl(30 15% 88%);
+  --journal-paper-shadow-2: hsl(30 12% 91%);
+  --journal-margin-color: rgba(195, 90, 80, 0.32);
+  --journal-line-color: rgba(160, 130, 100, 0.25);
+  --journal-divider-color: hsl(30 15% 80%);
+
   --sidebar-primary-border: hsl(var(--sidebar-primary));
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(var(--sidebar-accent));
@@ -297,13 +306,13 @@
 /* ── Journal Paper ─────────────────────────────────────────────────── */
 
 .journal-paper {
-  background-color: hsl(38 40% 97%);
-  border: 1px solid hsl(30 20% 84%);
+  background-color: var(--journal-paper-bg);
+  border: 1px solid var(--journal-paper-border);
 
   /* Stacked-pages shadow on right + bottom to suggest depth */
   box-shadow:
-    3px 3px 0 0 hsl(30 15% 88%),
-    6px 6px 0 0 hsl(30 12% 91%),
+    3px 3px 0 0 var(--journal-paper-shadow-1),
+    6px 6px 0 0 var(--journal-paper-shadow-2),
     0 8px 24px -4px rgba(0, 0, 0, 0.10),
     0 2px 6px -1px rgba(0, 0, 0, 0.06);
 
@@ -313,28 +322,26 @@
   background-image: linear-gradient(
     to right,
     transparent 3.25rem,
-    rgba(195, 90, 80, 0.32) 3.25rem,
-    rgba(195, 90, 80, 0.32) calc(3.25rem + 1.5px),
+    var(--journal-margin-color) 3.25rem,
+    var(--journal-margin-color) calc(3.25rem + 1.5px),
     transparent calc(3.25rem + 1.5px)
   );
   background-size: 100% 100%;
 }
 
 .dark .journal-paper {
-  background-color: hsl(22 18% 14%);
-  border-color: hsl(20 12% 22%);
+  --journal-paper-bg: hsl(22 18% 14%);
+  --journal-paper-border: hsl(20 12% 22%);
+  --journal-paper-shadow-1: hsl(20 12% 18%);
+  --journal-paper-shadow-2: hsl(20 10% 20%);
+  --journal-margin-color: rgba(195, 90, 80, 0.22);
+  --journal-line-color: rgba(180, 150, 110, 0.15);
+  --journal-divider-color: hsl(20 10% 25%);
   box-shadow:
-    3px 3px 0 0 hsl(20 12% 18%),
-    6px 6px 0 0 hsl(20 10% 20%),
+    3px 3px 0 0 var(--journal-paper-shadow-1),
+    6px 6px 0 0 var(--journal-paper-shadow-2),
     0 8px 24px -4px rgba(0, 0, 0, 0.35),
     0 2px 6px -1px rgba(0, 0, 0, 0.25);
-  background-image: linear-gradient(
-    to right,
-    transparent 3.25rem,
-    rgba(195, 90, 80, 0.22) 3.25rem,
-    rgba(195, 90, 80, 0.22) calc(3.25rem + 1.5px),
-    transparent calc(3.25rem + 1.5px)
-  );
 }
 
 /*
@@ -347,22 +354,12 @@
     to bottom,
     transparent,
     transparent calc(2rem - 1px),
-    rgba(160, 130, 100, 0.25) calc(2rem - 1px),
-    rgba(160, 130, 100, 0.25) 2rem
+    var(--journal-line-color) calc(2rem - 1px),
+    var(--journal-line-color) 2rem
   );
   background-size: 100% 2rem;
   background-attachment: local;
   line-height: 2rem;
-}
-
-.dark .journal-lined {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent calc(2rem - 1px),
-    rgba(180, 150, 110, 0.15) calc(2rem - 1px),
-    rgba(180, 150, 110, 0.15) 2rem
-  );
 }
 
 .journal-textarea {
@@ -392,10 +389,103 @@
 /* Divider between prompts — a faint pencil-rule feel */
 .journal-prompt-divider {
   border: none;
-  border-top: 1px dashed hsl(30 15% 80%);
+  border-top: 1px dashed var(--journal-divider-color);
   margin: 1rem 0 0.75rem;
 }
 
-.dark .journal-prompt-divider {
-  border-color: hsl(20 10% 25%);
+/* ── Parchment Theme ──────────────────────────────────────────────── */
+
+[data-theme="parchment"] {
+  /* Warm amber/sepia palette — aged paper, candlelight, oak */
+  --background: 40 42% 95%;
+  --foreground: 20 28% 18%;
+
+  --border: 35 28% 82%;
+
+  --card: 40 42% 95%;
+  --card-foreground: 20 28% 18%;
+  --card-border: 35 28% 82%;
+
+  --sidebar: 38 32% 91%;
+  --sidebar-foreground: 20 28% 18%;
+  --sidebar-border: 35 28% 82%;
+  --sidebar-primary: 28 58% 44%;
+  --sidebar-primary-foreground: 40 42% 95%;
+  --sidebar-accent: 36 28% 87%;
+  --sidebar-accent-foreground: 20 28% 18%;
+  --sidebar-ring: 28 58% 44%;
+
+  --popover: 40 42% 95%;
+  --popover-foreground: 20 28% 18%;
+  --popover-border: 35 28% 82%;
+
+  --primary: 28 58% 44%;
+  --primary-foreground: 40 42% 97%;
+
+  --secondary: 36 28% 87%;
+  --secondary-foreground: 20 28% 18%;
+
+  --muted: 36 24% 90%;
+  --muted-foreground: 28 16% 48%;
+
+  --accent: 36 28% 87%;
+  --accent-foreground: 20 28% 18%;
+
+  --destructive: 0 55% 52%;
+  --destructive-foreground: 40 42% 97%;
+
+  --input: 35 28% 82%;
+  --ring: 28 58% 44%;
+
+  /* Journal paper tokens */
+  --journal-paper-bg: hsl(42 52% 94%);
+  --journal-paper-border: hsl(32 28% 80%);
+  --journal-paper-shadow-1: hsl(32 22% 84%);
+  --journal-paper-shadow-2: hsl(32 18% 88%);
+  --journal-margin-color: rgba(155, 95, 45, 0.40);
+  --journal-line-color: rgba(130, 95, 50, 0.22);
+  --journal-divider-color: hsl(32 22% 78%);
+}
+
+[data-theme="parchment"].dark,
+[data-theme="parchment"] .dark {
+  --background: 24 20% 12%;
+  --foreground: 38 28% 88%;
+
+  --border: 24 16% 22%;
+
+  --card: 24 20% 14%;
+  --card-foreground: 38 28% 88%;
+  --card-border: 24 16% 22%;
+
+  --sidebar: 24 20% 10%;
+  --sidebar-foreground: 38 28% 88%;
+  --sidebar-border: 24 16% 22%;
+  --sidebar-primary: 30 55% 60%;
+  --sidebar-primary-foreground: 24 20% 12%;
+  --sidebar-accent: 24 16% 18%;
+  --sidebar-accent-foreground: 38 28% 88%;
+  --sidebar-ring: 30 55% 60%;
+
+  --popover: 24 20% 14%;
+  --popover-foreground: 38 28% 88%;
+  --popover-border: 24 16% 22%;
+
+  --primary: 30 55% 60%;
+  --primary-foreground: 24 20% 12%;
+
+  --secondary: 24 16% 18%;
+  --secondary-foreground: 38 28% 88%;
+
+  --muted: 24 16% 18%;
+  --muted-foreground: 32 14% 60%;
+
+  --accent: 24 16% 18%;
+  --accent-foreground: 38 28% 88%;
+
+  --destructive: 0 50% 48%;
+  --destructive-foreground: 38 28% 96%;
+
+  --input: 24 16% 24%;
+  --ring: 30 55% 60%;
 }

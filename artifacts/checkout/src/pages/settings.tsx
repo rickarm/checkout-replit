@@ -8,11 +8,101 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { HardDrive, Cloud, Loader2, Plus, X } from "lucide-react";
+import { HardDrive, Cloud, Loader2, Plus, X, Check } from "lucide-react";
+import { useTheme } from "@/contexts/theme-context";
+import { THEMES, ThemeId } from "@/lib/themes";
+import { cn } from "@/lib/utils";
+
+function ThemeSwatch({ theme, selected, onClick }: {
+  theme: typeof THEMES[number];
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "relative flex flex-col gap-0 rounded-xl overflow-hidden border-2 transition-all duration-200 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        selected ? "border-primary shadow-md scale-[1.02]" : "border-border/60 hover:border-primary/40 hover:shadow-sm"
+      )}
+      aria-pressed={selected}
+      aria-label={`Select ${theme.name} theme`}
+    >
+      {/* Paper preview */}
+      <div
+        className="h-24 w-full relative"
+        style={{ backgroundColor: theme.preview.bg }}
+      >
+        {/* Margin line */}
+        <div
+          className="absolute top-0 bottom-0 w-[1.5px]"
+          style={{ left: "2.2rem", backgroundColor: theme.preview.marginLine }}
+        />
+        {/* Ruled lines */}
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="absolute left-0 right-0 h-px"
+            style={{
+              top: `${i * 22}px`,
+              backgroundColor: theme.preview.ruleLine,
+            }}
+          />
+        ))}
+        {/* Simulated handwritten text */}
+        <div className="absolute left-10 right-3 top-3 flex flex-col gap-[10px]">
+          {[80, 65, 72].map((w, i) => (
+            <div
+              key={i}
+              className="h-[6px] rounded-full opacity-40"
+              style={{ width: `${w}%`, backgroundColor: theme.preview.ink }}
+            />
+          ))}
+        </div>
+        {/* Primary accent dot (top-right corner) */}
+        <div
+          className="absolute top-2 right-2.5 h-2.5 w-2.5 rounded-full opacity-80"
+          style={{ backgroundColor: theme.preview.primary }}
+        />
+        {/* Selection checkmark */}
+        {selected && (
+          <div
+            className="absolute bottom-2 right-2 h-5 w-5 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: theme.preview.primary }}
+          >
+            <Check className="h-3 w-3 text-white" />
+          </div>
+        )}
+      </div>
+      {/* Label row */}
+      <div
+        className="px-3 py-2.5 border-t"
+        style={{
+          backgroundColor: theme.preview.bg,
+          borderColor: theme.preview.ruleLine,
+        }}
+      >
+        <p
+          className="text-sm font-semibold leading-tight"
+          style={{ color: theme.preview.ink }}
+        >
+          {theme.name}
+        </p>
+        <p
+          className="text-xs leading-snug mt-0.5 opacity-70"
+          style={{ color: theme.preview.ink }}
+        >
+          {theme.description}
+        </p>
+      </div>
+    </button>
+  );
+}
 
 export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { theme: currentTheme, setTheme } = useTheme();
 
   const { data: settings, isLoading } = useGetStorageSettings({
     query: { queryKey: ["/api/journal/settings"] }
@@ -84,6 +174,7 @@ export default function Settings() {
     return (
       <div className="max-w-2xl mx-auto space-y-8">
         <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-[220px] w-full rounded-xl" />
         <Skeleton className="h-[300px] w-full rounded-xl" />
         <Skeleton className="h-[200px] w-full rounded-xl" />
       </div>
@@ -96,6 +187,28 @@ export default function Settings() {
         <h1 className="text-3xl font-serif text-foreground">Settings</h1>
         <p className="text-muted-foreground text-lg">Your journal lives in files you control.</p>
       </header>
+
+      {/* Appearance / Theme */}
+      <Card className="border-border/50 bg-card shadow-sm rounded-xl overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-6">
+          <CardTitle className="font-serif text-xl">Appearance</CardTitle>
+          <CardDescription className="text-base">
+            Choose how your journal looks. The theme is saved on this device.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-2 gap-4">
+            {THEMES.map((t) => (
+              <ThemeSwatch
+                key={t.id}
+                theme={t}
+                selected={currentTheme === t.id}
+                onClick={() => setTheme(t.id as ThemeId)}
+              />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Personal Values */}
       <Card className="border-border/50 bg-card shadow-sm rounded-xl overflow-hidden">

@@ -5,6 +5,7 @@ import { ClerkProvider, Show, SignIn, SignUp, useClerk } from "@clerk/react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { queryClient } from "@/lib/queryClient";
+import { ThemeProvider } from "@/contexts/theme-context";
 import Layout from "@/components/layout";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -144,9 +145,11 @@ function ClerkProviderWithRoutes() {
 
 function App() {
   return (
-    <WouterRouter base={basePath}>
-      <ClerkProviderWithRoutes />
-    </WouterRouter>
+    <ThemeProvider>
+      <WouterRouter base={basePath}>
+        <ClerkProviderWithRoutes />
+      </WouterRouter>
+    </ThemeProvider>
   );
 }
 
