@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { JournalPage, JournalLinearea } from "@/components/journal-page";
+import { JournalPage, JournalLinearea, JournalContentArea } from "@/components/journal-page";
 import { ArrowLeft, Check, Edit2, Loader2 } from "lucide-react";
 
 export default function EntryDetail() {
@@ -198,25 +198,19 @@ export default function EntryDetail() {
                 />
               )
             ) : answer.promptId === "presence" ? (
-              <div
-                className="font-serif text-foreground"
-                style={{ lineHeight: "2rem", paddingBottom: "1rem" }}
-              >
+              <JournalContentArea minRows={1}>
                 <span className="inline-block px-3 py-0.5 rounded-full bg-primary/10 text-primary font-medium text-base">
                   {answer.answer} / 10
                 </span>
-              </div>
+              </JournalContentArea>
             ) : (
-              <div
-                className="font-serif text-foreground whitespace-pre-wrap"
-                style={{ lineHeight: "2rem" }}
-              >
+              <JournalContentArea minRows={3}>
                 {answer.answer || (
                   <span className="text-muted-foreground italic text-sm">
                     Nothing written here.
                   </span>
                 )}
-              </div>
+              </JournalContentArea>
             )}
           </div>
         ))}

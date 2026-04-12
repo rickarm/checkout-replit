@@ -308,6 +308,16 @@
     0 2px 6px -1px rgba(0, 0, 0, 0.06);
 
   padding: 2rem 2.5rem 3rem 4.5rem; /* left pad clears the margin line */
+
+  /* Only the vertical margin line — no horizontal rules here */
+  background-image: linear-gradient(
+    to right,
+    transparent 3.25rem,
+    rgba(195, 90, 80, 0.32) 3.25rem,
+    rgba(195, 90, 80, 0.32) calc(3.25rem + 1.5px),
+    transparent calc(3.25rem + 1.5px)
+  );
+  background-size: 100% 100%;
 }
 
 .dark .journal-paper {
@@ -318,6 +328,41 @@
     6px 6px 0 0 hsl(20 10% 20%),
     0 8px 24px -4px rgba(0, 0, 0, 0.35),
     0 2px 6px -1px rgba(0, 0, 0, 0.25);
+  background-image: linear-gradient(
+    to right,
+    transparent 3.25rem,
+    rgba(195, 90, 80, 0.22) 3.25rem,
+    rgba(195, 90, 80, 0.22) calc(3.25rem + 1.5px),
+    transparent calc(3.25rem + 1.5px)
+  );
+}
+
+/*
+ * Lined rows — applied directly to textareas and read-only content divs.
+ * Each element draws its own ruled lines so the grid always aligns
+ * with its own first character, regardless of what's above it.
+ */
+.journal-lined {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(2rem - 1px),
+    rgba(160, 130, 100, 0.25) calc(2rem - 1px),
+    rgba(160, 130, 100, 0.25) 2rem
+  );
+  background-size: 100% 2rem;
+  background-attachment: local;
+  line-height: 2rem;
+}
+
+.dark .journal-lined {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(2rem - 1px),
+    rgba(180, 150, 110, 0.15) calc(2rem - 1px),
+    rgba(180, 150, 110, 0.15) 2rem
+  );
 }
 
 .journal-textarea {
@@ -325,6 +370,9 @@
   font-size: 1rem;
   line-height: 2rem;
   display: block;
+  /* Reset browser padding so text starts at y=0 and aligns with lines */
+  padding: 0;
+  margin: 0;
 }
 
 /* The prompt question label sits above the answer like a section header */
@@ -335,15 +383,17 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: hsl(var(--primary));
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   display: block;
+  /* Height is exactly 1rem so the lined area below starts cleanly */
+  line-height: 1rem;
 }
 
 /* Divider between prompts — a faint pencil-rule feel */
 .journal-prompt-divider {
   border: none;
   border-top: 1px dashed hsl(30 15% 80%);
-  margin: 1.5rem 0;
+  margin: 1rem 0 0.75rem;
 }
 
 .dark .journal-prompt-divider {
