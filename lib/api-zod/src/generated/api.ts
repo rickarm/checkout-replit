@@ -163,6 +163,12 @@ export const GetStorageSettingsResponse = zod.object({
     .string()
     .optional()
     .describe("Google Drive folder ID (future use)"),
+  personalValues: zod
+    .array(zod.string())
+    .optional()
+    .describe(
+      "Personal values shown as reminders on the values journal prompt",
+    ),
 });
 
 /**
@@ -179,6 +185,12 @@ export const UpdateStorageSettingsBody = zod.object({
     .string()
     .optional()
     .describe("Google Drive folder ID (future use)"),
+  personalValues: zod
+    .array(zod.string())
+    .optional()
+    .describe(
+      "Personal values shown as reminders on the values journal prompt",
+    ),
 });
 
 export const updateStorageSettingsResponseBackendDefault = `mock`;
@@ -192,4 +204,10 @@ export const UpdateStorageSettingsResponse = zod.object({
     .string()
     .optional()
     .describe("Google Drive folder ID (future use)"),
+  personalValues: zod
+    .array(zod.string())
+    .optional()
+    .describe(
+      "Personal values shown as reminders on the values journal prompt",
+    ),
 });

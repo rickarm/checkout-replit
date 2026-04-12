@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { useCreateEntry } from "@workspace/api-client-react";
+import { useCreateEntry, useGetStorageSettings } from "@workspace/api-client-react";
 import { prompts } from "@/lib/prompts";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -20,6 +20,11 @@ export default function NewEntry() {
 
   const createEntry = useCreateEntry();
   const isSaving = createEntry.isPending;
+
+  const { data: settings } = useGetStorageSettings({
+    query: { queryKey: ["/api/journal/settings"] }
+  });
+  const personalValues = settings?.personalValues ?? [];
 
   const handleSave = () => {
     const formattedAnswers = prompts.map((prompt) => ({
@@ -58,14 +63,12 @@ export default function NewEntry() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // ⌘↵ / Ctrl+↵ → save
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
         e.preventDefault();
         if (!isSaving) handleSave();
         return;
       }
 
-      // Esc → cancel (only when not focused in a text field)
       if (e.key === "Escape") {
         const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
         if (tag !== "textarea" && tag !== "input") {
@@ -98,6 +101,19 @@ export default function NewEntry() {
             {index > 0 && <hr className="journal-prompt-divider" />}
 
             <span className="journal-prompt-label">{prompt.text}</span>
+
+            {prompt.id === "values" && personalValues.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pb-2">
+                {personalValues.map((val) => (
+                  <span
+                    key={val}
+                    className="inline-block px-2.5 py-0.5 rounded-full bg-primary/8 border border-primary/20 text-primary/70 text-xs font-medium"
+                  >
+                    {val}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {prompt.type === "slider" ? (
               <div
@@ -169,7 +185,6 @@ export default function NewEntry() {
         </Button>
       </div>
 
-      {/* Keyboard hint */}
       <p className="text-center text-xs text-muted-foreground/50 tracking-wide select-none -mt-2">
         Tab between fields  ·  {modKey} save
       </p>

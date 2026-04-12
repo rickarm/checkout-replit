@@ -110,4 +110,5 @@ export const mockSettings: StorageSettings = {
   backend: "mock",
   localPath: undefined,
   googleDriveFolderId: undefined,
+  personalValues: ["Presence", "Honesty", "Growth", "Rest", "Connection"],
 };

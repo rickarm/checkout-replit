@@ -13,4 +13,6 @@ export interface StorageSettings {
   localPath?: string;
   /** Google Drive folder ID (future use) */
   googleDriveFolderId?: string;
+  /** Personal values shown as reminders on the values journal prompt */
+  personalValues?: string[];
 }

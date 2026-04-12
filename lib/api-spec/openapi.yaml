@@ -315,5 +315,10 @@ components:
         googleDriveFolderId:
           type: string
           description: Google Drive folder ID (future use)
+        personalValues:
+          type: array
+          items:
+            type: string
+          description: Personal values shown as reminders on the values journal prompt
       required:
         - backend

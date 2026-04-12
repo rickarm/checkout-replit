@@ -5,6 +5,7 @@ import {
   useGetEntry,
   useUpdateEntry,
   useListEntries,
+  useGetStorageSettings,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -40,6 +41,11 @@ export default function EntryDetail() {
     allEntries && currentIndex >= 0 && currentIndex < allEntries.length - 1
       ? allEntries[currentIndex + 1]
       : null;
+
+  const { data: settings } = useGetStorageSettings({
+    query: { queryKey: ["/api/journal/settings"] }
+  });
+  const personalValues = settings?.personalValues ?? [];
 
   const updateEntry = useUpdateEntry();
   const isSaving = updateEntry.isPending;
@@ -199,6 +205,19 @@ export default function EntryDetail() {
           <div key={answer.promptId}>
             {index > 0 && <hr className="journal-prompt-divider" />}
             <span className="journal-prompt-label">{answer.promptText}</span>
+
+            {answer.promptId === "values" && personalValues.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pb-2">
+                {personalValues.map((val) => (
+                  <span
+                    key={val}
+                    className="inline-block px-2.5 py-0.5 rounded-full bg-primary/8 border border-primary/20 text-primary/70 text-xs font-medium"
+                  >
+                    {val}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {isEditing ? (
               answer.promptId === "presence" ? (

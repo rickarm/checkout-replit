@@ -32,4 +32,5 @@ export interface StorageSettings {
   backend: "local" | "google-drive" | "mock";
   localPath?: string;
   googleDriveFolderId?: string;
+  personalValues?: string[];
 }
