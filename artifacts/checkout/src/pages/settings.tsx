@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetStorageSettings, useUpdateStorageSettings, StorageSettingsBackend } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import { HardDrive, Cloud, Loader2, Plus, X } from "lucide-react";
 
 export default function Settings() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: settings, isLoading } = useGetStorageSettings({
     query: { queryKey: ["/api/journal/settings"] }
@@ -62,6 +64,7 @@ export default function Settings() {
       }
     }, {
       onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/journal/settings"] });
         toast({
           title: "Settings saved",
           description: "Your preferences have been updated.",
