@@ -43,7 +43,7 @@ export const THEMES: Theme[] = [
     name: "PS/2",
     description: "WordPerfect blue on white. Doogie Howser's journal, circa 1989.",
     preview: {
-      bg: "hsl(240 100% 33%)",
+      bg: "hsl(240 100% 25%)",
       primary: "hsl(0 0% 100%)",
       ink: "hsl(0 0% 100%)",
       marginLine: "rgba(85, 85, 255, 0.70)",

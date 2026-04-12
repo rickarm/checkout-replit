@@ -1,11 +1,74 @@
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/hooks/use-theme";
+import { useUser } from "@clerk/react";
+import { format } from "date-fns";
 
 interface JournalPageProps {
   children: React.ReactNode;
   className?: string;
+  entryDate?: Date;
 }
 
-export function JournalPage({ children, className }: JournalPageProps) {
+function WPTabRuler() {
+  const ruler =
+    "\u00b7\u00b7\u00b7\u00b7\u00b7L\u00b7\u00b7\u00b7\u00b7t\u00b7\u00b7\u00b7\u00b7t\u00b7\u00b7\u00b7\u00b7t\u00b7\u00b7\u00b7\u00b7t\u00b7\u00b7\u00b7t\u00b7\u00b7\u00b7\u00b7t\u00b7\u00b7\u00b7\u00b7t\u00b7\u00b7\u00b7\u00b7t\u00b7\u00b7\u00b7\u00b7t\u00b7\u00b7\u00b7\u00b7R\u00b7\u00b7\u00b7\u00b7";
+  return (
+    <div className="wp-tab-ruler" aria-hidden="true">
+      {ruler}
+    </div>
+  );
+}
+
+function WPTitleBanner({ name }: { name: string }) {
+  const title = `PERSONAL JOURNAL OF ${name.toUpperCase()}, M.D.`;
+  const dashCount = Math.max(0, Math.floor((60 - title.length) / 2));
+  const dashes = "=".repeat(dashCount);
+  return (
+    <div className="wp-title-banner" aria-hidden="true">
+      {dashes}{title}{dashes}
+    </div>
+  );
+}
+
+function WPStatusBar({ date }: { date?: Date }) {
+  const now = date ?? new Date();
+  const dateStr = format(now, "MMMM d, yyyy").toUpperCase();
+  return (
+    <div className="wp-status-bar" aria-hidden="true">
+      <div className="wp-status-commands">
+        <div>Alt keys: Copy Delete Insert Vsearch Wordspell rePlace Bold Undl Plain Quit</div>
+        <div>ESC-menu&nbsp; Save Retrieve coMbine iNdent Justify Tabmargin Kpage Graph Xdelpage</div>
+      </div>
+      <div className="wp-status-info">
+        <span>JOURNAL.WP*</span>
+        <span>PG 1&nbsp;&nbsp; LN 1&nbsp;&nbsp; COL 1&nbsp;&nbsp;&nbsp;&nbsp; {dateStr}</span>
+        <span>WORD</span>
+      </div>
+    </div>
+  );
+}
+
+export function JournalPage({ children, className, entryDate }: JournalPageProps) {
+  const { theme } = useTheme();
+  const { user } = useUser();
+  const isTerminal = theme === "terminal";
+
+  if (isTerminal) {
+    const name =
+      user?.fullName ||
+      user?.firstName ||
+      user?.username ||
+      "Doogie Howser";
+    return (
+      <div className={cn("journal-paper relative wp-journal", className)}>
+        <WPTabRuler />
+        <WPTitleBanner name={name} />
+        <div className="wp-content">{children}</div>
+        <WPStatusBar date={entryDate} />
+      </div>
+    );
+  }
+
   return (
     <div className={cn("journal-paper relative rounded-sm", className)}>
       {children}
@@ -18,10 +81,6 @@ interface JournalLineareaProps
   minRows?: number;
 }
 
-/**
- * Editable textarea that draws its own ruled lines — alignment is always
- * correct because the grid starts from the element's own top edge.
- */
 export function JournalLinearea({
   className,
   minRows = 3,
@@ -52,10 +111,6 @@ interface JournalContentAreaProps {
   minRows?: number;
 }
 
-/**
- * Read-only content block with identical ruled lines to JournalLinearea.
- * Use this in view mode so the text sits on the same lines as when editing.
- */
 export function JournalContentArea({
   children,
   className,
