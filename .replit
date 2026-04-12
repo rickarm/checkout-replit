@@ -30,3 +30,8 @@ externalPort = 80
 [[ports]]
 localPort = 25227
 externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+VITE_API_URL = "https://agent-mac-mini.tail12345.ts.net"
