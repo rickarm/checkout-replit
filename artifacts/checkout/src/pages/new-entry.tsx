@@ -92,12 +92,12 @@ export default function NewEntry() {
                   }
                   className="w-full"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="grid grid-cols-3 text-xs text-muted-foreground">
                   <span>1 — Distracted</span>
-                  <span className="text-primary font-semibold text-sm font-serif">
+                  <span className="text-primary font-semibold text-sm font-serif text-center">
                     {answers[prompt.id] || 5}
                   </span>
-                  <span>10 — Present</span>
+                  <span className="text-right">10 — Present</span>
                 </div>
               </div>
             ) : (
