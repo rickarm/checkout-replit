@@ -489,3 +489,131 @@
   --input: 24 16% 24%;
   --ring: 30 55% 60%;
 }
+
+/* ── Terminal Theme — Doogie Howser, M.D. (1989–1993) ─────────────── */
+/* Phosphor blue-green on black CRT monitor aesthetic                  */
+
+[data-theme="terminal"] {
+  /* Deep space-black background, phosphor-cyan everything */
+  --background: 225 38% 7%;
+  --foreground: 192 100% 70%;
+
+  --border: 192 60% 20%;
+
+  --card: 225 40% 9%;
+  --card-foreground: 192 100% 70%;
+  --card-border: 192 60% 20%;
+
+  --sidebar: 225 40% 6%;
+  --sidebar-foreground: 192 100% 70%;
+  --sidebar-border: 192 60% 18%;
+  --sidebar-primary: 192 100% 62%;
+  --sidebar-primary-foreground: 225 38% 7%;
+  --sidebar-accent: 225 36% 14%;
+  --sidebar-accent-foreground: 192 100% 70%;
+  --sidebar-ring: 192 100% 62%;
+
+  --popover: 225 40% 10%;
+  --popover-foreground: 192 100% 70%;
+  --popover-border: 192 60% 20%;
+
+  /* Phosphor glow — bright cyan-blue */
+  --primary: 192 100% 62%;
+  --primary-foreground: 225 38% 7%;
+
+  --secondary: 225 36% 14%;
+  --secondary-foreground: 192 100% 70%;
+
+  --muted: 225 36% 13%;
+  --muted-foreground: 192 55% 45%;
+
+  --accent: 225 36% 14%;
+  --accent-foreground: 192 100% 70%;
+
+  --destructive: 348 80% 54%;
+  --destructive-foreground: 225 38% 7%;
+
+  --input: 225 36% 16%;
+  --ring: 192 100% 62%;
+
+  /* Monospace everywhere — it's a terminal */
+  --app-font-sans: 'Courier New', 'Lucida Console', Courier, monospace;
+  --app-font-serif: 'Courier New', 'Lucida Console', Courier, monospace;
+
+  /* Sharp, square corners — terminals have no rounded corners */
+  --radius: 0.125rem;
+
+  /* Journal paper tokens — terminal window, not paper */
+  --journal-paper-bg: hsl(225 42% 8%);
+  --journal-paper-border: hsl(192 60% 22%);
+  --journal-paper-shadow-1: transparent;
+  --journal-paper-shadow-2: transparent;
+  --journal-margin-color: rgba(0, 210, 240, 0.60);
+  --journal-line-color: rgba(0, 195, 228, 0.11);
+  --journal-divider-color: hsl(192 50% 18%);
+}
+
+/* Override the stacked-paper shadows and add a phosphor glow instead */
+[data-theme="terminal"] .journal-paper {
+  box-shadow:
+    0 0 0 1px rgba(0, 210, 240, 0.12),
+    0 0 30px -6px rgba(0, 200, 230, 0.18),
+    0 0 70px -20px rgba(0, 180, 220, 0.12);
+
+  /* Margin line + faint CRT scanlines */
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 3.25rem,
+      var(--journal-margin-color) 3.25rem,
+      var(--journal-margin-color) calc(3.25rem + 1.5px),
+      transparent calc(3.25rem + 1.5px)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0, 0, 30, 0.18) 3px,
+      rgba(0, 0, 30, 0.18) 4px
+    );
+}
+
+/* Phosphor text glow on journal content */
+[data-theme="terminal"] .journal-textarea,
+[data-theme="terminal"] .journal-lined {
+  text-shadow: 0 0 8px rgba(0, 210, 240, 0.45);
+}
+
+/* Prompt labels in terminal */
+[data-theme="terminal"] .journal-prompt-label {
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 10px rgba(0, 210, 240, 0.60);
+}
+
+/* Cursor-blink on the prompt divider ─── */
+[data-theme="terminal"] .journal-prompt-divider {
+  border-top: 1px solid hsl(192 60% 22%);
+}
+
+/* Global phosphor glow on headings and the app title in terminal mode */
+[data-theme="terminal"] h1,
+[data-theme="terminal"] h2,
+[data-theme="terminal"] h3 {
+  text-shadow: 0 0 12px rgba(0, 210, 240, 0.40);
+}
+
+/* Subtle scanline overlay on the whole page */
+[data-theme="terminal"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 20, 0.06) 3px,
+    rgba(0, 0, 20, 0.06) 4px
+  );
+}

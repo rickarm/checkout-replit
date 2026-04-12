@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { HardDrive, Cloud, Loader2, Plus, X, Check } from "lucide-react";
-import { useTheme } from "@/contexts/theme-context";
+import { useTheme } from "@/hooks/use-theme";
 import { THEMES, ThemeId } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 
@@ -197,7 +197,7 @@ export default function Settings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {THEMES.map((t) => (
               <ThemeSwatch
                 key={t.id}

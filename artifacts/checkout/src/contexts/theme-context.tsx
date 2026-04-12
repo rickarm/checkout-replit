@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { ThemeId, DEFAULT_THEME, THEME_STORAGE_KEY } from "@/lib/themes";
+import { ThemeId, DEFAULT_THEME, THEME_STORAGE_KEY, VALID_THEMES } from "@/lib/themes";
 
 interface ThemeContextValue {
   theme: ThemeId;
   setTheme: (theme: ThemeId) => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue>({
+export const ThemeContext = createContext<ThemeContextValue>({
   theme: DEFAULT_THEME,
   setTheme: () => {},
 });
@@ -14,10 +14,10 @@ const ThemeContext = createContext<ThemeContextValue>({
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>(() => {
     try {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY);
-      if (stored === "paper" || stored === "parchment") {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY) as ThemeId;
+      if (VALID_THEMES.includes(stored)) {
         document.documentElement.setAttribute("data-theme", stored);
-        return stored as ThemeId;
+        return stored;
       }
     } catch {}
     document.documentElement.setAttribute("data-theme", DEFAULT_THEME);
@@ -36,8 +36,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       {children}
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme() {
-  return useContext(ThemeContext);
 }

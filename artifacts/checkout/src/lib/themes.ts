@@ -1,4 +1,4 @@
-export type ThemeId = "paper" | "parchment";
+export type ThemeId = "paper" | "parchment" | "terminal";
 
 export interface Theme {
   id: ThemeId;
@@ -38,7 +38,21 @@ export const THEMES: Theme[] = [
       ruleLine: "rgba(130,95,50,0.22)",
     },
   },
+  {
+    id: "terminal",
+    name: "Terminal",
+    description: "Phosphor-blue on black. Type your diary like it's 1989.",
+    preview: {
+      bg: "hsl(225 38% 7%)",
+      primary: "hsl(192 100% 62%)",
+      ink: "hsl(192 100% 70%)",
+      marginLine: "rgba(0, 210, 240, 0.65)",
+      ruleLine: "rgba(0, 195, 228, 0.13)",
+    },
+  },
 ];
 
 export const DEFAULT_THEME: ThemeId = "paper";
 export const THEME_STORAGE_KEY = "checkout-theme";
+
+export const VALID_THEMES: ThemeId[] = ["paper", "parchment", "terminal"];
