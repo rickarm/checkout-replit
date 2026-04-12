@@ -8,7 +8,10 @@
 import { useAuth } from "@clerk/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const BASE = (import.meta.env.VITE_API_URL as string) ?? "";
+// Frontend and backend share the same Replit domain — use relative URLs.
+// (VITE_API_URL is intentionally ignored: the old Mac Mini secret would
+//  override it and point calls at the wrong host.)
+const BASE = "";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

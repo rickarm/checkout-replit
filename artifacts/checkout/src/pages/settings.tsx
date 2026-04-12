@@ -81,7 +81,8 @@ export default function Settings() {
   const { data: driveStatus, isLoading: isCheckingDrive } = useDriveStatus();
 
   const handleConnect = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google/connect`;
+    // Relative URL — the Replit proxy routes /auth/google/* to the API server.
+    window.location.href = "/auth/google/connect";
   };
 
   return (

@@ -79,7 +79,7 @@ export default function NewEntry() {
         <Button
           size="lg"
           className="rounded-full px-8"
-          onClick={() => window.location.href = `${import.meta.env.VITE_API_URL}/auth/google/connect`}
+          onClick={() => window.location.href = "/auth/google/connect"}
         >
           Connect Google Drive
         </Button>
