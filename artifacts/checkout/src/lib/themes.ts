@@ -41,13 +41,13 @@ export const THEMES: Theme[] = [
   {
     id: "terminal",
     name: "PS/2",
-    description: "Amber phosphor on black. IBM PS/2, circa 1990.",
+    description: "WordPerfect blue on white. Doogie Howser's journal, circa 1989.",
     preview: {
-      bg: "hsl(28 22% 5%)",
-      primary: "hsl(42 100% 60%)",
-      ink: "hsl(40 96% 62%)",
-      marginLine: "rgba(255, 176, 0, 0.60)",
-      ruleLine: "rgba(220, 145, 0, 0.13)",
+      bg: "hsl(240 100% 33%)",
+      primary: "hsl(0 0% 100%)",
+      ink: "hsl(0 0% 100%)",
+      marginLine: "rgba(85, 85, 255, 0.70)",
+      ruleLine: "rgba(100, 100, 255, 0.20)",
     },
   },
 ];

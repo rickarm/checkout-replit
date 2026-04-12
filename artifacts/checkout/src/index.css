@@ -490,78 +490,76 @@
   --ring: 30 55% 60%;
 }
 
-/* ── Terminal Theme — IBM PS/2 Amber Phosphor (circa 1990) ────────── */
-/* Warm amber-orange phosphor glow on near-black brownish CRT screen   */
-/* Inspired by the IBM 8503 monochrome monitor shipped with the PS/2   */
+/* ── Terminal Theme — WordPerfect / Doogie Howser DOS Journal ─────── */
+/* Deep royal blue (#0000AA) background, bright white monospace text.  */
+/* Faithfully recreates the WordPerfect-for-DOS look, circa 1989.      */
 
 [data-theme="terminal"] {
-  /* Near-black with a warm brownish undertone — IBM's characteristic dark */
-  --background: 28 22% 5%;
-  --foreground: 40 96% 62%;        /* warm amber phosphor */
+  /* Classic WordPerfect / CGA blue */
+  --background: 240 100% 33%;
+  --foreground: 0 0% 100%;         /* pure white text */
 
-  --border: 36 55% 16%;
+  --border: 240 100% 60%;          /* brighter blue border */
 
-  --card: 28 22% 7%;
-  --card-foreground: 40 96% 62%;
-  --card-border: 36 55% 16%;
+  --card: 240 100% 30%;
+  --card-foreground: 0 0% 100%;
+  --card-border: 240 100% 55%;
 
-  --sidebar: 28 22% 4%;
-  --sidebar-foreground: 40 96% 62%;
-  --sidebar-border: 36 55% 14%;
-  --sidebar-primary: 42 100% 62%;  /* bright amber highlight */
-  --sidebar-primary-foreground: 28 22% 5%;
-  --sidebar-accent: 28 20% 12%;
-  --sidebar-accent-foreground: 40 96% 62%;
-  --sidebar-ring: 42 100% 62%;
+  --sidebar: 240 100% 27%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-border: 240 100% 50%;
+  --sidebar-primary: 0 0% 100%;    /* white as the "primary" accent */
+  --sidebar-primary-foreground: 240 100% 33%;
+  --sidebar-accent: 240 100% 40%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 0 0% 100%;
 
-  --popover: 28 22% 8%;
-  --popover-foreground: 40 96% 62%;
-  --popover-border: 36 55% 16%;
+  --popover: 240 100% 28%;
+  --popover-foreground: 0 0% 100%;
+  --popover-border: 240 100% 55%;
 
-  /* Amber phosphor — the signature IBM monochrome colour */
-  --primary: 42 100% 60%;
-  --primary-foreground: 28 22% 5%;
+  /* White as primary — the bright cursor / highlight colour in WordPerfect */
+  --primary: 0 0% 100%;
+  --primary-foreground: 240 100% 33%;
 
-  --secondary: 28 20% 12%;
-  --secondary-foreground: 40 96% 62%;
+  --secondary: 240 100% 42%;
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 28 18% 11%;
-  --muted-foreground: 38 55% 40%;
+  --muted: 240 100% 40%;
+  --muted-foreground: 240 100% 85%; /* soft blue-white, like WP status bar */
 
-  --accent: 28 20% 12%;
-  --accent-foreground: 40 96% 62%;
+  --accent: 240 100% 42%;
+  --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 75% 52%;
-  --destructive-foreground: 28 22% 5%;
+  --destructive: 0 80% 60%;
+  --destructive-foreground: 0 0% 100%;
 
-  --input: 28 20% 14%;
-  --ring: 42 100% 60%;
+  --input: 240 100% 40%;
+  --ring: 0 0% 100%;
 
-  /* Monospace — every IBM terminal used a fixed-width font */
+  /* Monospace — WordPerfect used a fixed-width CGA font */
   --app-font-sans: 'Courier New', 'Lucida Console', Courier, monospace;
   --app-font-serif: 'Courier New', 'Lucida Console', Courier, monospace;
 
-  /* Zero radius — IBM screens had sharp rectangular UI elements */
-  --radius: 0.0625rem;
+  /* Zero radius — DOS text editors had no rounded UI */
+  --radius: 0rem;
 
-  /* Journal "paper" = the CRT screen surface */
-  --journal-paper-bg: hsl(28 24% 6%);
-  --journal-paper-border: hsl(36 55% 18%);
+  /* Journal "paper" = the WordPerfect blue editing surface */
+  --journal-paper-bg: hsl(240 100% 33%);
+  --journal-paper-border: hsl(240 100% 55%);
   --journal-paper-shadow-1: transparent;
   --journal-paper-shadow-2: transparent;
-  --journal-margin-color: rgba(255, 176, 0, 0.55);
-  --journal-line-color: rgba(220, 145, 0, 0.11);
-  --journal-divider-color: hsl(36 45% 16%);
+  --journal-margin-color: rgba(85, 85, 255, 0.70);  /* bright blue, same hue */
+  --journal-line-color: rgba(100, 100, 255, 0.20);
+  --journal-divider-color: hsl(240 100% 55%);
 }
 
-/* Amber phosphor glow instead of stacked-page shadow */
+/* Flat, borderless — the full screen IS the document */
 [data-theme="terminal"] .journal-paper {
-  box-shadow:
-    0 0 0 1px rgba(255, 170, 0, 0.14),
-    0 0 28px -6px rgba(255, 160, 0, 0.16),
-    0 0 70px -20px rgba(220, 130, 0, 0.10);
+  box-shadow: none;
+  border-color: transparent;
 
-  /* Margin line + CRT scanlines layered */
+  /* Subtle margin line in a slightly brighter blue */
   background-image:
     linear-gradient(
       to right,
@@ -569,52 +567,16 @@
       var(--journal-margin-color) 3.25rem,
       var(--journal-margin-color) calc(3.25rem + 1.5px),
       transparent calc(3.25rem + 1.5px)
-    ),
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 3px,
-      rgba(10, 5, 0, 0.22) 3px,
-      rgba(10, 5, 0, 0.22) 4px
     );
 }
 
-/* Warm amber phosphor glow on journal text */
-[data-theme="terminal"] .journal-textarea,
-[data-theme="terminal"] .journal-lined {
-  text-shadow: 0 0 7px rgba(255, 168, 0, 0.50);
-}
-
-/* Prompt label — uppercase amber, slightly brighter */
+/* Prompt label — all-caps white, like a WordPerfect menu label */
 [data-theme="terminal"] .journal-prompt-label {
-  letter-spacing: 0.14em;
-  text-shadow: 0 0 10px rgba(255, 176, 0, 0.65);
+  letter-spacing: 0.12em;
+  color: hsl(240 100% 85%);
 }
 
-/* Prompt divider — a faint amber rule, like a separator on a DOS menu */
+/* Prompt divider — a horizontal rule in bright blue */
 [data-theme="terminal"] .journal-prompt-divider {
-  border-top: 1px solid hsl(36 45% 16%);
-}
-
-/* Phosphor glow on headings and nav title */
-[data-theme="terminal"] h1,
-[data-theme="terminal"] h2,
-[data-theme="terminal"] h3 {
-  text-shadow: 0 0 14px rgba(255, 165, 0, 0.45);
-}
-
-/* Full-page CRT scanline overlay — the IBM monitor's characteristic texture */
-[data-theme="terminal"] body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 3px,
-    rgba(5, 2, 0, 0.10) 3px,
-    rgba(5, 2, 0, 0.10) 4px
-  );
+  border-top: 1px solid hsl(240 100% 55%);
 }
