@@ -41,13 +41,13 @@ export const THEMES: Theme[] = [
   {
     id: "terminal",
     name: "Terminal",
-    description: "Phosphor-blue on black. Type your diary like it's 1989.",
+    description: "Amber phosphor on black. IBM PS/2, circa 1990.",
     preview: {
-      bg: "hsl(225 38% 7%)",
-      primary: "hsl(192 100% 62%)",
-      ink: "hsl(192 100% 70%)",
-      marginLine: "rgba(0, 210, 240, 0.65)",
-      ruleLine: "rgba(0, 195, 228, 0.13)",
+      bg: "hsl(28 22% 5%)",
+      primary: "hsl(42 100% 60%)",
+      ink: "hsl(40 96% 62%)",
+      marginLine: "rgba(255, 176, 0, 0.60)",
+      ruleLine: "rgba(220, 145, 0, 0.13)",
     },
   },
 ];

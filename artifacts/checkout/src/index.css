@@ -490,77 +490,78 @@
   --ring: 30 55% 60%;
 }
 
-/* ── Terminal Theme — Doogie Howser, M.D. (1989–1993) ─────────────── */
-/* Phosphor blue-green on black CRT monitor aesthetic                  */
+/* ── Terminal Theme — IBM PS/2 Amber Phosphor (circa 1990) ────────── */
+/* Warm amber-orange phosphor glow on near-black brownish CRT screen   */
+/* Inspired by the IBM 8503 monochrome monitor shipped with the PS/2   */
 
 [data-theme="terminal"] {
-  /* Deep space-black background, phosphor-cyan everything */
-  --background: 225 38% 7%;
-  --foreground: 192 100% 70%;
+  /* Near-black with a warm brownish undertone — IBM's characteristic dark */
+  --background: 28 22% 5%;
+  --foreground: 40 96% 62%;        /* warm amber phosphor */
 
-  --border: 192 60% 20%;
+  --border: 36 55% 16%;
 
-  --card: 225 40% 9%;
-  --card-foreground: 192 100% 70%;
-  --card-border: 192 60% 20%;
+  --card: 28 22% 7%;
+  --card-foreground: 40 96% 62%;
+  --card-border: 36 55% 16%;
 
-  --sidebar: 225 40% 6%;
-  --sidebar-foreground: 192 100% 70%;
-  --sidebar-border: 192 60% 18%;
-  --sidebar-primary: 192 100% 62%;
-  --sidebar-primary-foreground: 225 38% 7%;
-  --sidebar-accent: 225 36% 14%;
-  --sidebar-accent-foreground: 192 100% 70%;
-  --sidebar-ring: 192 100% 62%;
+  --sidebar: 28 22% 4%;
+  --sidebar-foreground: 40 96% 62%;
+  --sidebar-border: 36 55% 14%;
+  --sidebar-primary: 42 100% 62%;  /* bright amber highlight */
+  --sidebar-primary-foreground: 28 22% 5%;
+  --sidebar-accent: 28 20% 12%;
+  --sidebar-accent-foreground: 40 96% 62%;
+  --sidebar-ring: 42 100% 62%;
 
-  --popover: 225 40% 10%;
-  --popover-foreground: 192 100% 70%;
-  --popover-border: 192 60% 20%;
+  --popover: 28 22% 8%;
+  --popover-foreground: 40 96% 62%;
+  --popover-border: 36 55% 16%;
 
-  /* Phosphor glow — bright cyan-blue */
-  --primary: 192 100% 62%;
-  --primary-foreground: 225 38% 7%;
+  /* Amber phosphor — the signature IBM monochrome colour */
+  --primary: 42 100% 60%;
+  --primary-foreground: 28 22% 5%;
 
-  --secondary: 225 36% 14%;
-  --secondary-foreground: 192 100% 70%;
+  --secondary: 28 20% 12%;
+  --secondary-foreground: 40 96% 62%;
 
-  --muted: 225 36% 13%;
-  --muted-foreground: 192 55% 45%;
+  --muted: 28 18% 11%;
+  --muted-foreground: 38 55% 40%;
 
-  --accent: 225 36% 14%;
-  --accent-foreground: 192 100% 70%;
+  --accent: 28 20% 12%;
+  --accent-foreground: 40 96% 62%;
 
-  --destructive: 348 80% 54%;
-  --destructive-foreground: 225 38% 7%;
+  --destructive: 0 75% 52%;
+  --destructive-foreground: 28 22% 5%;
 
-  --input: 225 36% 16%;
-  --ring: 192 100% 62%;
+  --input: 28 20% 14%;
+  --ring: 42 100% 60%;
 
-  /* Monospace everywhere — it's a terminal */
+  /* Monospace — every IBM terminal used a fixed-width font */
   --app-font-sans: 'Courier New', 'Lucida Console', Courier, monospace;
   --app-font-serif: 'Courier New', 'Lucida Console', Courier, monospace;
 
-  /* Sharp, square corners — terminals have no rounded corners */
-  --radius: 0.125rem;
+  /* Zero radius — IBM screens had sharp rectangular UI elements */
+  --radius: 0.0625rem;
 
-  /* Journal paper tokens — terminal window, not paper */
-  --journal-paper-bg: hsl(225 42% 8%);
-  --journal-paper-border: hsl(192 60% 22%);
+  /* Journal "paper" = the CRT screen surface */
+  --journal-paper-bg: hsl(28 24% 6%);
+  --journal-paper-border: hsl(36 55% 18%);
   --journal-paper-shadow-1: transparent;
   --journal-paper-shadow-2: transparent;
-  --journal-margin-color: rgba(0, 210, 240, 0.60);
-  --journal-line-color: rgba(0, 195, 228, 0.11);
-  --journal-divider-color: hsl(192 50% 18%);
+  --journal-margin-color: rgba(255, 176, 0, 0.55);
+  --journal-line-color: rgba(220, 145, 0, 0.11);
+  --journal-divider-color: hsl(36 45% 16%);
 }
 
-/* Override the stacked-paper shadows and add a phosphor glow instead */
+/* Amber phosphor glow instead of stacked-page shadow */
 [data-theme="terminal"] .journal-paper {
   box-shadow:
-    0 0 0 1px rgba(0, 210, 240, 0.12),
-    0 0 30px -6px rgba(0, 200, 230, 0.18),
-    0 0 70px -20px rgba(0, 180, 220, 0.12);
+    0 0 0 1px rgba(255, 170, 0, 0.14),
+    0 0 28px -6px rgba(255, 160, 0, 0.16),
+    0 0 70px -20px rgba(220, 130, 0, 0.10);
 
-  /* Margin line + faint CRT scanlines */
+  /* Margin line + CRT scanlines layered */
   background-image:
     linear-gradient(
       to right,
@@ -573,36 +574,36 @@
       to bottom,
       transparent 0px,
       transparent 3px,
-      rgba(0, 0, 30, 0.18) 3px,
-      rgba(0, 0, 30, 0.18) 4px
+      rgba(10, 5, 0, 0.22) 3px,
+      rgba(10, 5, 0, 0.22) 4px
     );
 }
 
-/* Phosphor text glow on journal content */
+/* Warm amber phosphor glow on journal text */
 [data-theme="terminal"] .journal-textarea,
 [data-theme="terminal"] .journal-lined {
-  text-shadow: 0 0 8px rgba(0, 210, 240, 0.45);
+  text-shadow: 0 0 7px rgba(255, 168, 0, 0.50);
 }
 
-/* Prompt labels in terminal */
+/* Prompt label — uppercase amber, slightly brighter */
 [data-theme="terminal"] .journal-prompt-label {
-  letter-spacing: 0.12em;
-  text-shadow: 0 0 10px rgba(0, 210, 240, 0.60);
+  letter-spacing: 0.14em;
+  text-shadow: 0 0 10px rgba(255, 176, 0, 0.65);
 }
 
-/* Cursor-blink on the prompt divider ─── */
+/* Prompt divider — a faint amber rule, like a separator on a DOS menu */
 [data-theme="terminal"] .journal-prompt-divider {
-  border-top: 1px solid hsl(192 60% 22%);
+  border-top: 1px solid hsl(36 45% 16%);
 }
 
-/* Global phosphor glow on headings and the app title in terminal mode */
+/* Phosphor glow on headings and nav title */
 [data-theme="terminal"] h1,
 [data-theme="terminal"] h2,
 [data-theme="terminal"] h3 {
-  text-shadow: 0 0 12px rgba(0, 210, 240, 0.40);
+  text-shadow: 0 0 14px rgba(255, 165, 0, 0.45);
 }
 
-/* Subtle scanline overlay on the whole page */
+/* Full-page CRT scanline overlay — the IBM monitor's characteristic texture */
 [data-theme="terminal"] body::after {
   content: "";
   position: fixed;
@@ -613,7 +614,7 @@
     to bottom,
     transparent 0px,
     transparent 3px,
-    rgba(0, 0, 20, 0.06) 3px,
-    rgba(0, 0, 20, 0.06) 4px
+    rgba(5, 2, 0, 0.10) 3px,
+    rgba(5, 2, 0, 0.10) 4px
   );
 }
