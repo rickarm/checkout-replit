@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { format, parseISO } from "date-fns";
-import { useGetEntry, useUpdateEntry } from "@workspace/api-client-react";
+import {
+  useGetEntry,
+  useUpdateEntry,
+  useListEntries,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { JournalPage, JournalLinearea, JournalContentArea } from "@/components/journal-page";
-import { ArrowLeft, Check, Edit2, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Edit2, Loader2 } from "lucide-react";
 
 export default function EntryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -17,43 +21,52 @@ export default function EntryDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
+  // Reset editing state whenever we navigate to a different entry
+  useEffect(() => {
+    setIsEditing(false);
+  }, [id]);
+
   const { data: entry, isLoading, error } = useGetEntry(id, {
-    query: {
-      enabled: !!id,
-      queryKey: ["/api/journal/entries", id],
-    },
+    query: { enabled: !!id, queryKey: ["/api/journal/entries", id] },
   });
+
+  // Load the full list so we can find this entry's neighbors
+  const { data: allEntries } = useListEntries(
+    {},
+    { query: { queryKey: ["/api/journal/entries"] } }
+  );
+
+  // Entries are returned reverse-chronological (newest first)
+  const currentIndex = allEntries?.findIndex((e) => e.id === id) ?? -1;
+  const newerEntry = currentIndex > 0 ? allEntries![currentIndex - 1] : null;
+  const olderEntry =
+    allEntries && currentIndex >= 0 && currentIndex < allEntries.length - 1
+      ? allEntries[currentIndex + 1]
+      : null;
 
   const updateEntry = useUpdateEntry();
   const isSaving = updateEntry.isPending;
 
   useEffect(() => {
     if (entry && !isEditing) {
-      const initialAnswers: Record<string, string> = {};
-      entry.answers.forEach((a) => {
-        initialAnswers[a.promptId] = a.answer;
-      });
-      setAnswers(initialAnswers);
+      const initial: Record<string, string> = {};
+      entry.answers.forEach((a) => { initial[a.promptId] = a.answer; });
+      setAnswers(initial);
     }
   }, [entry, isEditing]);
 
   const handleSave = () => {
     if (!entry) return;
-
     const formattedAnswers = entry.answers.map((a) => ({
       promptId: a.promptId,
       promptText: a.promptText,
       answer: answers[a.promptId] || "",
     }));
-
     updateEntry.mutate(
       { id, data: { answers: formattedAnswers } },
       {
         onSuccess: () => {
-          toast({
-            title: "Changes saved",
-            description: "Your entry has been updated.",
-          });
+          toast({ title: "Changes saved", description: "Your entry has been updated." });
           setIsEditing(false);
         },
         onError: () => {
@@ -72,9 +85,7 @@ export default function EntryDetail() {
       <div className="py-20 text-center space-y-4 animate-in fade-in">
         <h2 className="text-2xl font-serif text-destructive">Entry not found</h2>
         <p className="text-muted-foreground">This entry might have been deleted or doesn't exist.</p>
-        <Button variant="outline" onClick={() => setLocation("/")}>
-          Return to Journal
-        </Button>
+        <Button variant="outline" onClick={() => setLocation("/")}>Return to Journal</Button>
       </div>
     );
   }
@@ -93,6 +104,7 @@ export default function EntryDetail() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
+      {/* Top nav: back + edit/save */}
       <nav className="flex items-center justify-between">
         <Button
           variant="ghost"
@@ -101,7 +113,7 @@ export default function EntryDetail() {
           className="text-muted-foreground hover:text-foreground gap-2 -ml-3"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          All entries
         </Button>
 
         {!isEditing ? (
@@ -116,31 +128,18 @@ export default function EntryDetail() {
           </Button>
         ) : (
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditing(false)}
-              disabled={isSaving}
-            >
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} disabled={isSaving}>
               Cancel
             </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="rounded-full gap-2"
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
+            <Button size="sm" onClick={handleSave} disabled={isSaving} className="rounded-full gap-2">
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               Save
             </Button>
           </div>
         )}
       </nav>
 
+      {/* Date header */}
       <header className="space-y-1 text-center">
         <p className="text-primary font-medium tracking-widest uppercase text-xs">
           {format(parseISO(entry.createdAt), "h:mm a")}
@@ -150,26 +149,21 @@ export default function EntryDetail() {
         </h1>
       </header>
 
+      {/* Journal paper */}
       <JournalPage>
         {entry.answers.map((answer, index) => (
           <div key={answer.promptId}>
             {index > 0 && <hr className="journal-prompt-divider" />}
-
             <span className="journal-prompt-label">{answer.promptText}</span>
 
             {isEditing ? (
               answer.promptId === "presence" ? (
                 <div style={{ lineHeight: "2rem", paddingBottom: "1rem" }} className="space-y-3">
                   <Slider
-                    min={1}
-                    max={10}
-                    step={1}
+                    min={1} max={10} step={1}
                     value={[parseInt(answers[answer.promptId] || answer.answer || "5")]}
                     onValueChange={(val) =>
-                      setAnswers((prev) => ({
-                        ...prev,
-                        [answer.promptId]: val[0].toString(),
-                      }))
+                      setAnswers((prev) => ({ ...prev, [answer.promptId]: val[0].toString() }))
                     }
                     className="w-full"
                   />
@@ -184,16 +178,9 @@ export default function EntryDetail() {
               ) : (
                 <JournalLinearea
                   minRows={3}
-                  value={
-                    answers[answer.promptId] !== undefined
-                      ? answers[answer.promptId]
-                      : answer.answer
-                  }
+                  value={answers[answer.promptId] !== undefined ? answers[answer.promptId] : answer.answer}
                   onChange={(e) =>
-                    setAnswers((prev) => ({
-                      ...prev,
-                      [answer.promptId]: e.target.value,
-                    }))
+                    setAnswers((prev) => ({ ...prev, [answer.promptId]: e.target.value }))
                   }
                 />
               )
@@ -206,15 +193,56 @@ export default function EntryDetail() {
             ) : (
               <JournalContentArea minRows={3}>
                 {answer.answer || (
-                  <span className="text-muted-foreground italic text-sm">
-                    Nothing written here.
-                  </span>
+                  <span className="text-muted-foreground italic text-sm">Nothing written here.</span>
                 )}
               </JournalContentArea>
             )}
           </div>
         ))}
       </JournalPage>
+
+      {/* Entry-to-entry navigation */}
+      {(olderEntry || newerEntry) && (
+        <div className="flex items-center justify-between pt-2 border-t border-border/30">
+          {olderEntry ? (
+            <button
+              onClick={() => setLocation(`/entry/${olderEntry.id}`)}
+              className="group flex items-center gap-2 text-left text-muted-foreground hover:text-foreground transition-colors py-2"
+            >
+              <ArrowLeft className="h-4 w-4 flex-shrink-0 transition-transform group-hover:-translate-x-0.5" />
+              <span className="flex flex-col">
+                <span className="text-xs uppercase tracking-wide font-medium text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
+                  Older
+                </span>
+                <span className="text-sm font-serif">
+                  {format(parseISO(olderEntry.date + "T12:00:00Z"), "MMM d, yyyy")}
+                </span>
+              </span>
+            </button>
+          ) : (
+            <div />
+          )}
+
+          {newerEntry ? (
+            <button
+              onClick={() => setLocation(`/entry/${newerEntry.id}`)}
+              className="group flex items-center gap-2 text-right text-muted-foreground hover:text-foreground transition-colors py-2"
+            >
+              <span className="flex flex-col">
+                <span className="text-xs uppercase tracking-wide font-medium text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
+                  Newer
+                </span>
+                <span className="text-sm font-serif">
+                  {format(parseISO(newerEntry.date + "T12:00:00Z"), "MMM d, yyyy")}
+                </span>
+              </span>
+              <ArrowRight className="h-4 w-4 flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
+            </button>
+          ) : (
+            <div />
+          )}
+        </div>
+      )}
     </div>
   );
 }
