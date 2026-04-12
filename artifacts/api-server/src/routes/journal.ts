@@ -12,7 +12,6 @@ import {
 
 export const journalRouter = Router();
 
-// Extend Express Request to carry userId
 declare global {
   namespace Express {
     interface Request {
@@ -34,72 +33,104 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 
 journalRouter.use(requireAuth);
 
-journalRouter.get("/entries", (req, res) => {
-  const parseResult = ListEntriesQueryParams.safeParse(req.query);
-  const params = parseResult.success ? parseResult.data : {};
-  const entries = journalRepository.listEntries(req.userId!, params);
-  res.json(entries);
+journalRouter.get("/entries", async (req, res) => {
+  try {
+    const parseResult = ListEntriesQueryParams.safeParse(req.query);
+    const params = parseResult.success ? parseResult.data : {};
+    const entries = await journalRepository.listEntries(req.userId!, params);
+    res.json(entries);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to list entries" });
+  }
 });
 
-journalRouter.post("/entries", (req, res) => {
-  const parseResult = CreateEntryBody.safeParse(req.body);
-  if (!parseResult.success) {
-    res.status(400).json({ error: parseResult.error.message });
-    return;
+journalRouter.post("/entries", async (req, res) => {
+  try {
+    const parseResult = CreateEntryBody.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ error: parseResult.error.message });
+      return;
+    }
+    const entry = await journalRepository.createEntry(req.userId!, parseResult.data);
+    res.status(201).json(entry);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create entry" });
   }
-  const entry = journalRepository.createEntry(req.userId!, parseResult.data);
-  res.status(201).json(entry);
 });
 
-journalRouter.get("/entries/:id", (req, res) => {
-  const parseResult = GetEntryParams.safeParse(req.params);
-  if (!parseResult.success) {
-    res.status(400).json({ error: "Invalid entry id" });
-    return;
+journalRouter.get("/entries/:id", async (req, res) => {
+  try {
+    const parseResult = GetEntryParams.safeParse(req.params);
+    if (!parseResult.success) {
+      res.status(400).json({ error: "Invalid entry id" });
+      return;
+    }
+    const entry = await journalRepository.getEntry(req.userId!, parseResult.data.id);
+    if (!entry) {
+      res.status(404).json({ error: "Entry not found" });
+      return;
+    }
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get entry" });
   }
-  const entry = journalRepository.getEntry(req.userId!, parseResult.data.id);
-  if (!entry) {
-    res.status(404).json({ error: "Entry not found" });
-    return;
-  }
-  res.json(entry);
 });
 
-journalRouter.put("/entries/:id", (req, res) => {
-  const paramsResult = UpdateEntryParams.safeParse(req.params);
-  if (!paramsResult.success) {
-    res.status(400).json({ error: "Invalid entry id" });
-    return;
+journalRouter.put("/entries/:id", async (req, res) => {
+  try {
+    const paramsResult = UpdateEntryParams.safeParse(req.params);
+    if (!paramsResult.success) {
+      res.status(400).json({ error: "Invalid entry id" });
+      return;
+    }
+    const bodyResult = UpdateEntryBody.safeParse(req.body);
+    if (!bodyResult.success) {
+      res.status(400).json({ error: bodyResult.error.message });
+      return;
+    }
+    const entry = await journalRepository.updateEntry(
+      req.userId!,
+      paramsResult.data.id,
+      bodyResult.data
+    );
+    if (!entry) {
+      res.status(404).json({ error: "Entry not found" });
+      return;
+    }
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update entry" });
   }
-  const bodyResult = UpdateEntryBody.safeParse(req.body);
-  if (!bodyResult.success) {
-    res.status(400).json({ error: bodyResult.error.message });
-    return;
-  }
-  const entry = journalRepository.updateEntry(req.userId!, paramsResult.data.id, bodyResult.data);
-  if (!entry) {
-    res.status(404).json({ error: "Entry not found" });
-    return;
-  }
-  res.json(entry);
 });
 
-journalRouter.get("/summary", (req, res) => {
-  const summary = journalRepository.getSummary(req.userId!);
-  res.json(summary);
-});
-
-journalRouter.get("/settings", (req, res) => {
-  const settings = journalRepository.getSettings(req.userId!);
-  res.json(settings);
-});
-
-journalRouter.put("/settings", (req, res) => {
-  const parseResult = UpdateStorageSettingsBody.safeParse(req.body);
-  if (!parseResult.success) {
-    res.status(400).json({ error: parseResult.error.message });
-    return;
+journalRouter.get("/summary", async (req, res) => {
+  try {
+    const summary = await journalRepository.getSummary(req.userId!);
+    res.json(summary);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get summary" });
   }
-  const settings = journalRepository.updateSettings(req.userId!, parseResult.data);
-  res.json(settings);
+});
+
+journalRouter.get("/settings", async (req, res) => {
+  try {
+    const settings = await journalRepository.getSettings(req.userId!);
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get settings" });
+  }
+});
+
+journalRouter.put("/settings", async (req, res) => {
+  try {
+    const parseResult = UpdateStorageSettingsBody.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({ error: parseResult.error.message });
+      return;
+    }
+    const settings = await journalRepository.updateSettings(req.userId!, parseResult.data);
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update settings" });
+  }
 });

@@ -1,38 +1,24 @@
 /**
- * Journal Repository — Mock Implementation (per-user scoped)
+ * Journal Repository — PostgreSQL Implementation (per-user scoped)
  *
- * This is the integration seam. When the Phase 1 refactor (shared service layer)
- * is complete, replace this file with a real JournalRepository that talks to
- * the chosen storage backend (local files, Google Drive, etc.).
+ * Replaces the in-memory mock. The integration seam contract is unchanged:
+ * every function accepts userId as the first argument.
  *
- * The interface contract (listEntries, getEntry, createEntry, updateEntry,
- * getSettings, updateSettings) should remain stable.
- *
- * Each function accepts a userId so that data is fully scoped per user.
+ * Schema lives in two tables:
+ *   journal_entries  — one row per entry, answers stored as JSONB
+ *   journal_settings — one row per user
  */
 
+import pg from "pg";
 import { randomUUID } from "crypto";
-import { mockEntries, mockSettings, DAILY_PROMPTS } from "./journalMockData.js";
+import { mockSettings, DAILY_PROMPTS } from "./journalMockData.js";
 import type { JournalEntry, StorageSettings, PromptAnswer } from "./journalTypes.js";
 
-// Per-user in-memory stores
-const userEntries = new Map<string, JournalEntry[]>();
-const userSettings = new Map<string, StorageSettings>();
+const { Pool } = pg;
 
-function getUserEntries(userId: string): JournalEntry[] {
-  if (!userEntries.has(userId)) {
-    // Seed new users with a clean slate (no mock entries in real usage)
-    userEntries.set(userId, []);
-  }
-  return userEntries.get(userId)!;
-}
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-function getUserSettings(userId: string): StorageSettings {
-  if (!userSettings.has(userId)) {
-    userSettings.set(userId, { ...mockSettings });
-  }
-  return userSettings.get(userId)!;
-}
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function buildMarkdown(date: string, answers: PromptAnswer[]): string {
   const dateLabel = new Date(date + "T12:00:00Z").toLocaleDateString("en-US", {
@@ -44,6 +30,19 @@ function buildMarkdown(date: string, answers: PromptAnswer[]): string {
     .map((a) => `**${a.promptText}**\n\n${a.answer}`)
     .join("\n\n---\n\n");
   return `# ${dateLabel}\n\n${sections}`;
+}
+
+function rowToEntry(row: Record<string, unknown>): JournalEntry {
+  return {
+    id: row.id as string,
+    date: (row.date as Date).toISOString().slice(0, 10),
+    template: row.template as string,
+    answers: row.answers as PromptAnswer[],
+    markdown: row.markdown as string,
+    createdAt: (row.created_at as Date).toISOString(),
+    updatedAt: (row.updated_at as Date).toISOString(),
+    source: (row.source as { backend: "postgres" }) ?? { backend: "postgres" },
+  };
 }
 
 function computeSummary(entries: JournalEntry[]) {
@@ -66,7 +65,6 @@ function computeSummary(entries: JournalEntry[]) {
   const sortedDates = entries.map((e) => e.date).sort();
   let longestStreak = 0;
   let streak = 1;
-
   for (let i = 1; i < sortedDates.length; i++) {
     const prev = new Date(sortedDates[i - 1]);
     const curr = new Date(sortedDates[i]);
@@ -84,7 +82,6 @@ function computeSummary(entries: JournalEntry[]) {
   const daysSinceLast = lastDate
     ? Math.floor((new Date(today).getTime() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24))
     : 999;
-
   const currentStreak = daysSinceLast <= 1 ? streak : 0;
 
   return {
@@ -96,93 +93,118 @@ function computeSummary(entries: JournalEntry[]) {
   };
 }
 
+// ── Repository ───────────────────────────────────────────────────────────────
+
 export const journalRepository = {
-  listEntries(userId: string, params?: { month?: string; search?: string }): JournalEntry[] {
-    let result = [...getUserEntries(userId)].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+  async listEntries(
+    userId: string,
+    params?: { month?: string; search?: string }
+  ): Promise<JournalEntry[]> {
+    let query = `SELECT * FROM journal_entries WHERE user_id = $1`;
+    const values: unknown[] = [userId];
 
     if (params?.month) {
-      result = result.filter((e) => e.date.startsWith(params.month!));
+      values.push(params.month + "%");
+      query += ` AND date::text LIKE $${values.length}`;
     }
 
     if (params?.search) {
-      const q = params.search.toLowerCase();
-      result = result.filter(
-        (e) =>
-          e.date.includes(q) ||
-          e.answers.some((a) => a.answer.toLowerCase().includes(q))
-      );
+      const q = "%" + params.search.toLowerCase() + "%";
+      values.push(q);
+      query += ` AND (date::text ILIKE $${values.length} OR answers::text ILIKE $${values.length})`;
     }
 
-    return result;
+    query += ` ORDER BY date DESC`;
+
+    const { rows } = await pool.query(query, values);
+    return rows.map(rowToEntry);
   },
 
-  getEntry(userId: string, id: string): JournalEntry | undefined {
-    return getUserEntries(userId).find((e) => e.id === id);
+  async getEntry(userId: string, id: string): Promise<JournalEntry | undefined> {
+    const { rows } = await pool.query(
+      `SELECT * FROM journal_entries WHERE id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+    return rows.length ? rowToEntry(rows[0]) : undefined;
   },
 
-  createEntry(
+  async createEntry(
     userId: string,
     data: { date: string; template?: string; answers: PromptAnswer[] }
-  ): JournalEntry {
-    const entries = getUserEntries(userId);
-    const now = new Date().toISOString();
+  ): Promise<JournalEntry> {
+    const id = `entry-${randomUUID()}`;
+    const now = new Date();
     const answersWithPrompts = data.answers.map((a) => {
       const prompt = DAILY_PROMPTS.find((p) => p.promptId === a.promptId);
-      return {
-        ...a,
-        promptText: a.promptText || prompt?.promptText || a.promptId,
-      };
+      return { ...a, promptText: a.promptText || prompt?.promptText || a.promptId };
     });
+    const markdown = buildMarkdown(data.date, answersWithPrompts);
+    const template = data.template ?? "daily-reflection";
+    const source = { backend: "postgres" };
 
-    const entry: JournalEntry = {
-      id: `entry-${randomUUID()}`,
-      date: data.date,
-      template: data.template ?? "daily-reflection",
-      answers: answersWithPrompts,
-      markdown: buildMarkdown(data.date, answersWithPrompts),
-      createdAt: now,
-      updatedAt: now,
-      source: { backend: "mock", path: `${data.date}.md` },
-    };
-    entries.unshift(entry);
-    return entry;
+    const { rows } = await pool.query(
+      `INSERT INTO journal_entries (id, user_id, date, template, answers, markdown, source, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+       RETURNING *`,
+      [id, userId, data.date, template, JSON.stringify(answersWithPrompts), markdown, JSON.stringify(source), now]
+    );
+    return rowToEntry(rows[0]);
   },
 
-  updateEntry(
+  async updateEntry(
     userId: string,
     id: string,
     data: { answers: PromptAnswer[]; markdown?: string }
-  ): JournalEntry | undefined {
-    const entries = getUserEntries(userId);
-    const idx = entries.findIndex((e) => e.id === id);
-    if (idx === -1) return undefined;
+  ): Promise<JournalEntry | undefined> {
+    const existing = await this.getEntry(userId, id);
+    if (!existing) return undefined;
 
-    const existing = entries[idx];
-    const now = new Date().toISOString();
-    const updated: JournalEntry = {
-      ...existing,
-      answers: data.answers,
-      markdown: data.markdown ?? buildMarkdown(existing.date, data.answers),
-      updatedAt: now,
+    const markdown = data.markdown ?? buildMarkdown(existing.date, data.answers);
+    const now = new Date();
+
+    const { rows } = await pool.query(
+      `UPDATE journal_entries
+       SET answers = $1, markdown = $2, updated_at = $3
+       WHERE id = $4 AND user_id = $5
+       RETURNING *`,
+      [JSON.stringify(data.answers), markdown, now, id, userId]
+    );
+    return rows.length ? rowToEntry(rows[0]) : undefined;
+  },
+
+  async getSummary(userId: string) {
+    const entries = await this.listEntries(userId);
+    return computeSummary(entries);
+  },
+
+  async getSettings(userId: string): Promise<StorageSettings> {
+    const { rows } = await pool.query(
+      `SELECT * FROM journal_settings WHERE user_id = $1`,
+      [userId]
+    );
+    if (!rows.length) {
+      return { ...mockSettings };
+    }
+    return {
+      backend: "postgres",
+      personalValues: rows[0].personal_values ?? [],
     };
-    entries[idx] = updated;
-    return updated;
   },
 
-  getSummary(userId: string) {
-    return computeSummary(getUserEntries(userId));
-  },
+  async updateSettings(userId: string, data: Partial<StorageSettings>): Promise<StorageSettings> {
+    const current = await this.getSettings(userId);
+    const merged = { ...current, ...data };
+    const personalValues = merged.personalValues ?? [];
 
-  getSettings(userId: string): StorageSettings {
-    return { ...getUserSettings(userId) };
-  },
+    await pool.query(
+      `INSERT INTO journal_settings (user_id, personal_values, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id) DO UPDATE
+         SET personal_values = EXCLUDED.personal_values,
+             updated_at = NOW()`,
+      [userId, personalValues]
+    );
 
-  updateSettings(userId: string, data: Partial<StorageSettings>): StorageSettings {
-    const current = getUserSettings(userId);
-    const updated = { ...current, ...data };
-    userSettings.set(userId, updated);
-    return { ...updated };
+    return merged;
   },
 };

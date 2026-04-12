@@ -11,7 +11,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
 - **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM (provisioned but not used for journal entries — intentional)
+- **Database**: PostgreSQL (Replit built-in, `DATABASE_URL` env var) — used for journal entries and settings
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
@@ -32,7 +32,7 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 ### Architecture Overview
 
-Checkout is a calm personal journaling web app. Journal entries are **not** stored in a database — the product philosophy is user-owned portable data (markdown files). The app is currently built on mocked in-memory data with clear integration seams.
+Checkout is a calm personal journaling web app. Journal entries and settings are stored in Replit's built-in PostgreSQL database, scoped per Clerk userId. The `journalRepository.ts` file remains the integration seam — swap it to redirect to a different backend (files, Google Drive, etc.) without touching routes or frontend.
 
 ### Authentication
 
