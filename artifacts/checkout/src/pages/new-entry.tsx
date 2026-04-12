@@ -1,58 +1,44 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { useCreateEntry, useGetStorageSettings } from "@workspace/api-client-react";
-import { prompts } from "@/lib/prompts";
+import { useTemplate, useCreateEntry, useDriveStatus } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { JournalPage, JournalLinearea } from "@/components/journal-page";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, AlertCircle } from "lucide-react";
 
 export default function NewEntry() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const today = new Date();
 
-  const [answers, setAnswers] = useState<Record<string, string>>({
-    presence: "5",
-  });
-
+  const { data: template, isLoading: isLoadingTemplate } = useTemplate();
+  const { data: driveStatus } = useDriveStatus();
   const createEntry = useCreateEntry();
   const isSaving = createEntry.isPending;
 
-  const { data: settings } = useGetStorageSettings({
-    query: { queryKey: ["/api/journal/settings"] }
-  });
-  const personalValues = settings?.personalValues ?? [];
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+
+  // Initialise presence default
+  useEffect(() => {
+    if (template && !answers["presence"]) {
+      setAnswers((prev) => ({ ...prev, presence: "5" }));
+    }
+  }, [template]);
 
   const handleSave = () => {
-    const formattedAnswers = prompts.map((prompt) => ({
-      promptId: prompt.id,
-      promptText: prompt.text,
-      answer: answers[prompt.id] || "",
-    }));
-
     createEntry.mutate(
-      {
-        data: {
-          date: format(today, "yyyy-MM-dd"),
-          template: "daily_checkout",
-          answers: formattedAnswers,
-        },
-      },
+      { date: format(today, "yyyy-MM-dd"), answers },
       {
         onSuccess: (entry) => {
-          toast({
-            title: "Entry saved",
-            description: "Your reflection has been recorded.",
-          });
+          toast({ title: "Entry saved", description: "Your reflection has been recorded." });
           setLocation(`/entry/${entry.id}`);
         },
-        onError: () => {
+        onError: (err) => {
           toast({
             title: "Error saving entry",
-            description: "Something went wrong. Please try again.",
+            description: err.message || "Something went wrong. Please try again.",
             variant: "destructive",
           });
         },
@@ -66,23 +52,48 @@ export default function NewEntry() {
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
         e.preventDefault();
         if (!isSaving) handleSave();
-        return;
       }
-
       if (e.key === "Escape") {
         const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
-        if (tag !== "textarea" && tag !== "input") {
-          setLocation("/");
-        }
+        if (tag !== "textarea" && tag !== "input") setLocation("/");
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isSaving, answers]);
 
   const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.platform);
   const modKey = isMac ? "⌘↵" : "Ctrl+↵";
+
+  if (!driveStatus?.connected) {
+    return (
+      <div className="max-w-2xl mx-auto py-20 text-center space-y-6">
+        <div className="mx-auto w-14 h-14 bg-muted rounded-full flex items-center justify-center">
+          <AlertCircle className="h-7 w-7 text-muted-foreground" />
+        </div>
+        <h2 className="text-2xl font-serif">Connect Google Drive first</h2>
+        <p className="text-muted-foreground">
+          Your journal entries are stored as markdown files in your Google Drive.
+          Connect your account to start writing.
+        </p>
+        <Button
+          size="lg"
+          className="rounded-full px-8"
+          onClick={() => window.location.href = `${import.meta.env.VITE_API_URL}/auth/google/connect`}
+        >
+          Connect Google Drive
+        </Button>
+      </div>
+    );
+  }
+
+  if (isLoadingTemplate) {
+    return (
+      <div className="max-w-2xl mx-auto py-20 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out fill-mode-both pb-20">
@@ -95,64 +106,46 @@ export default function NewEntry() {
         </h1>
       </header>
 
-      <JournalPage>
-        {prompts.map((prompt, index) => (
-          <div key={prompt.id}>
+      <JournalPage entryDate={today}>
+        {template?.questions.map((question, index) => (
+          <div key={question.id}>
             {index > 0 && <hr className="journal-prompt-divider" />}
 
-            <span className="journal-prompt-label">{prompt.text}</span>
+            <span className="journal-prompt-label">{question.title}</span>
 
-            {prompt.id === "values" && personalValues.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pb-2">
-                {personalValues.map((val) => (
-                  <span
-                    key={val}
-                    className="inline-block px-2.5 py-0.5 rounded-full bg-primary/8 border border-primary/20 text-primary/70 text-xs font-medium"
-                  >
-                    {val}
-                  </span>
-                ))}
-              </div>
+            {question.example && (
+              <p className="text-xs text-muted-foreground/60 mb-1 italic">{question.example}</p>
             )}
 
-            {prompt.type === "slider" ? (
-              <div
-                style={{ lineHeight: "2rem", paddingBottom: "1rem" }}
-                className="space-y-3"
-              >
+            {question.type === "number" ? (
+              <div style={{ lineHeight: "2rem", paddingBottom: "1rem" }} className="space-y-3">
                 <Slider
-                  id={prompt.id}
-                  min={prompt.min}
-                  max={prompt.max}
+                  id={question.id}
+                  min={question.min ?? 1}
+                  max={question.max ?? 10}
                   step={1}
-                  value={[parseInt(answers[prompt.id] || "5")]}
+                  value={[parseInt(answers[question.id] || "5")]}
                   onValueChange={(val) =>
-                    setAnswers((prev) => ({
-                      ...prev,
-                      [prompt.id]: val[0].toString(),
-                    }))
+                    setAnswers((prev) => ({ ...prev, [question.id]: val[0].toString() }))
                   }
                   className="w-full"
                 />
                 <div className="grid grid-cols-3 text-xs text-muted-foreground">
                   <span>1 — Distracted</span>
                   <span className="text-primary font-semibold text-sm font-serif text-center">
-                    {answers[prompt.id] || 5}
+                    {answers[question.id] || 5}
                   </span>
                   <span className="text-right">10 — Present</span>
                 </div>
               </div>
             ) : (
               <JournalLinearea
-                id={prompt.id}
-                placeholder={prompt.placeholder}
+                id={question.id}
+                placeholder={question.prompt}
                 minRows={3}
-                value={answers[prompt.id] || ""}
+                value={answers[question.id] || ""}
                 onChange={(e) =>
-                  setAnswers((prev) => ({
-                    ...prev,
-                    [prompt.id]: e.target.value,
-                  }))
+                  setAnswers((prev) => ({ ...prev, [question.id]: e.target.value }))
                 }
               />
             )}
@@ -186,7 +179,7 @@ export default function NewEntry() {
       </div>
 
       <p className="text-center text-xs text-muted-foreground/50 tracking-wide select-none -mt-2">
-        Tab between fields  ·  {modKey} save
+        Tab between fields · {modKey} save
       </p>
     </div>
   );

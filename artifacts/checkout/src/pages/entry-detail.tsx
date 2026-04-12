@@ -1,12 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation } from "wouter";
 import { format, parseISO } from "date-fns";
-import {
-  useGetEntry,
-  useUpdateEntry,
-  useListEntries,
-  useGetStorageSettings,
-} from "@workspace/api-client-react";
+import { useEntry, useEntries, useUpdateEntry, useTemplate } from "@/lib/api";
+import type { EntrySection } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,66 +18,53 @@ export default function EntryDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    setIsEditing(false);
-  }, [id]);
+  useEffect(() => { setIsEditing(false); }, [id]);
 
-  const { data: entry, isLoading, error } = useGetEntry(id, {
-    query: { enabled: !!id, queryKey: ["/api/journal/entries", id] },
-  });
+  const { data: entry, isLoading, error } = useEntry(id);
+  const { data: template } = useTemplate();
+  const { data: allData } = useEntries();
+  const allEntries = allData?.entries ?? [];
 
-  const { data: allEntries } = useListEntries(
-    {},
-    { query: { queryKey: ["/api/journal/entries"] } }
-  );
-
-  const currentIndex = allEntries?.findIndex((e) => e.id === id) ?? -1;
-  const newerEntry = currentIndex > 0 ? allEntries![currentIndex - 1] : null;
-  const olderEntry =
-    allEntries && currentIndex >= 0 && currentIndex < allEntries.length - 1
-      ? allEntries[currentIndex + 1]
-      : null;
-
-  const { data: settings } = useGetStorageSettings({
-    query: { queryKey: ["/api/journal/settings"] }
-  });
-  const personalValues = settings?.personalValues ?? [];
+  const currentIndex = allEntries.findIndex((e) => e.id === id);
+  const newerEntry = currentIndex > 0 ? allEntries[currentIndex - 1] : null;
+  const olderEntry = currentIndex >= 0 && currentIndex < allEntries.length - 1
+    ? allEntries[currentIndex + 1]
+    : null;
 
   const updateEntry = useUpdateEntry();
   const isSaving = updateEntry.isPending;
 
+  // When we enter edit mode, build answers from sections + template
   useEffect(() => {
-    if (entry && !isEditing) {
-      const initial: Record<string, string> = {};
-      entry.answers.forEach((a) => { initial[a.promptId] = a.answer; });
-      setAnswers(initial);
-    }
-  }, [entry, isEditing]);
+    if (!entry || !template || !isEditing) return;
+    // Match sections by title to template questions to reconstruct answer map
+    const mapped: Record<string, string> = {};
+    template.questions.forEach((q) => {
+      const section = entry.sections.find((s: EntrySection) => s.title === q.title);
+      mapped[q.id] = section ? section.content : "";
+    });
+    setAnswers(mapped);
+  }, [entry, template, isEditing]);
 
   const handleSave = useCallback(() => {
-    if (!entry) return;
-    const formattedAnswers = entry.answers.map((a) => ({
-      promptId: a.promptId,
-      promptText: a.promptText,
-      answer: answers[a.promptId] || "",
-    }));
+    if (!id) return;
     updateEntry.mutate(
-      { id, data: { answers: formattedAnswers } },
+      { id, answers },
       {
         onSuccess: () => {
           toast({ title: "Changes saved", description: "Your entry has been updated." });
           setIsEditing(false);
         },
-        onError: () => {
+        onError: (err) => {
           toast({
             title: "Error saving changes",
-            description: "Something went wrong. Please try again.",
+            description: err.message || "Something went wrong. Please try again.",
             variant: "destructive",
           });
         },
       }
     );
-  }, [entry, answers, id, updateEntry, toast]);
+  }, [id, answers, updateEntry, toast]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -89,40 +72,21 @@ export default function EntryDetail() {
       const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
       const inField = tag === "input" || tag === "textarea" || tag === "select";
 
-      // ⌘↵ / Ctrl+↵ → save when editing
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
         e.preventDefault();
         if (isEditing && !isSaving) handleSave();
         return;
       }
-
-      // Esc → cancel editing
       if (e.key === "Escape" && isEditing) {
         e.preventDefault();
         setIsEditing(false);
         return;
       }
-
       if (inField) return;
-
-      // E → enter edit mode
-      if (e.key === "e" && !isEditing) {
-        e.preventDefault();
-        setIsEditing(true);
-        return;
-      }
-
-      // ← → navigate
-      if (e.key === "ArrowLeft" && olderEntry) {
-        e.preventDefault();
-        setLocation(`/entry/${olderEntry.id}`);
-      }
-      if (e.key === "ArrowRight" && newerEntry) {
-        e.preventDefault();
-        setLocation(`/entry/${newerEntry.id}`);
-      }
+      if (e.key === "e" && !isEditing) { e.preventDefault(); setIsEditing(true); return; }
+      if (e.key === "ArrowLeft" && olderEntry) { e.preventDefault(); setLocation(`/entry/${olderEntry.id}`); }
+      if (e.key === "ArrowRight" && newerEntry) { e.preventDefault(); setLocation(`/entry/${newerEntry.id}`); }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isEditing, isSaving, olderEntry, newerEntry, handleSave, setLocation]);
@@ -151,30 +115,23 @@ export default function EntryDetail() {
 
   const isMac = typeof navigator !== "undefined" && /mac/i.test(navigator.platform);
   const modKey = isMac ? "⌘↵" : "Ctrl+↵";
+  const entryDateObj = parseISO(entry.date + "T12:00:00Z");
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
-      {/* Top nav: back + edit/save */}
+      {/* Nav */}
       <nav className="flex items-center justify-between">
         <Button
-          variant="ghost"
-          size="sm"
+          variant="ghost" size="sm"
           onClick={() => setLocation("/")}
           className="text-muted-foreground hover:text-foreground gap-2 -ml-3"
         >
-          <ArrowLeft className="h-4 w-4" />
-          All entries
+          <ArrowLeft className="h-4 w-4" /> All entries
         </Button>
 
         {!isEditing ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-            className="gap-2 rounded-full"
-          >
-            <Edit2 className="h-4 w-4" />
-            Edit
+          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="gap-2 rounded-full">
+            <Edit2 className="h-4 w-4" /> Edit
           </Button>
         ) : (
           <div className="flex gap-2">
@@ -191,49 +148,35 @@ export default function EntryDetail() {
 
       {/* Date header */}
       <header className="space-y-1 text-center">
-        <p className="text-primary font-medium tracking-widest uppercase text-xs">
-          {format(parseISO(entry.createdAt), "h:mm a")}
-        </p>
+        <p className="text-primary font-medium tracking-widest uppercase text-xs">Evening Checkout</p>
         <h1 className="text-3xl sm:text-4xl font-serif text-foreground">
-          {format(parseISO(entry.date + "T12:00:00Z"), "EEEE, MMMM do, yyyy")}
+          {format(entryDateObj, "EEEE, MMMM do, yyyy")}
         </h1>
       </header>
 
       {/* Journal paper */}
-      <JournalPage>
-        {entry.answers.map((answer, index) => (
-          <div key={answer.promptId}>
-            {index > 0 && <hr className="journal-prompt-divider" />}
-            <span className="journal-prompt-label">{answer.promptText}</span>
+      <JournalPage entryDate={entryDateObj}>
+        {isEditing && template ? (
+          // Edit mode — render from template questions
+          template.questions.map((question, index) => (
+            <div key={question.id}>
+              {index > 0 && <hr className="journal-prompt-divider" />}
+              <span className="journal-prompt-label">{question.title}</span>
 
-            {answer.promptId === "values" && personalValues.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pb-2">
-                {personalValues.map((val) => (
-                  <span
-                    key={val}
-                    className="inline-block px-2.5 py-0.5 rounded-full bg-primary/8 border border-primary/20 text-primary/70 text-xs font-medium"
-                  >
-                    {val}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {isEditing ? (
-              answer.promptId === "presence" ? (
+              {question.type === "number" ? (
                 <div style={{ lineHeight: "2rem", paddingBottom: "1rem" }} className="space-y-3">
                   <Slider
-                    min={1} max={10} step={1}
-                    value={[parseInt(answers[answer.promptId] || answer.answer || "5")]}
+                    min={question.min ?? 1} max={question.max ?? 10} step={1}
+                    value={[parseInt(answers[question.id] || "5")]}
                     onValueChange={(val) =>
-                      setAnswers((prev) => ({ ...prev, [answer.promptId]: val[0].toString() }))
+                      setAnswers((prev) => ({ ...prev, [question.id]: val[0].toString() }))
                     }
                     className="w-full"
                   />
                   <div className="grid grid-cols-3 text-xs text-muted-foreground">
                     <span>1 — Distracted</span>
                     <span className="text-primary font-semibold text-sm font-serif text-center">
-                      {answers[answer.promptId] || answer.answer || 5}
+                      {answers[question.id] || 5}
                     </span>
                     <span className="text-right">10 — Present</span>
                   </div>
@@ -241,30 +184,31 @@ export default function EntryDetail() {
               ) : (
                 <JournalLinearea
                   minRows={3}
-                  value={answers[answer.promptId] !== undefined ? answers[answer.promptId] : answer.answer}
+                  value={answers[question.id] ?? ""}
                   onChange={(e) =>
-                    setAnswers((prev) => ({ ...prev, [answer.promptId]: e.target.value }))
+                    setAnswers((prev) => ({ ...prev, [question.id]: e.target.value }))
                   }
                 />
-              )
-            ) : answer.promptId === "presence" ? (
-              <JournalContentArea minRows={1}>
-                <span className="inline-block px-3 py-0.5 rounded-full bg-primary/10 text-primary font-medium text-base">
-                  {answer.answer} / 10
-                </span>
-              </JournalContentArea>
-            ) : (
-              <JournalContentArea minRows={3}>
-                {answer.answer || (
+              )}
+            </div>
+          ))
+        ) : (
+          // Read mode — render from sections
+          entry.sections.map((section: EntrySection, index: number) => (
+            <div key={index}>
+              {index > 0 && <hr className="journal-prompt-divider" />}
+              <span className="journal-prompt-label">{section.title}</span>
+              <JournalContentArea minRows={section.content ? 2 : 1}>
+                {section.content || (
                   <span className="text-muted-foreground italic text-sm">Nothing written here.</span>
                 )}
               </JournalContentArea>
-            )}
-          </div>
-        ))}
+            </div>
+          ))
+        )}
       </JournalPage>
 
-      {/* Entry-to-entry navigation */}
+      {/* Entry navigation */}
       {(olderEntry || newerEntry) && (
         <div className="flex items-center justify-between pt-2 border-t border-border/30">
           {olderEntry ? (
@@ -274,17 +218,11 @@ export default function EntryDetail() {
             >
               <ArrowLeft className="h-4 w-4 flex-shrink-0 transition-transform group-hover:-translate-x-0.5" />
               <span className="flex flex-col">
-                <span className="text-xs uppercase tracking-wide font-medium text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
-                  Older
-                </span>
-                <span className="text-sm font-serif">
-                  {format(parseISO(olderEntry.date + "T12:00:00Z"), "MMM d, yyyy")}
-                </span>
+                <span className="text-xs uppercase tracking-wide font-medium text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">Older</span>
+                <span className="text-sm font-serif">{format(parseISO(olderEntry.date + "T12:00:00Z"), "MMM d, yyyy")}</span>
               </span>
             </button>
-          ) : (
-            <div />
-          )}
+          ) : <div />}
 
           {newerEntry ? (
             <button
@@ -292,22 +230,15 @@ export default function EntryDetail() {
               className="group flex items-center gap-2 text-right text-muted-foreground hover:text-foreground transition-colors py-2"
             >
               <span className="flex flex-col">
-                <span className="text-xs uppercase tracking-wide font-medium text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
-                  Newer
-                </span>
-                <span className="text-sm font-serif">
-                  {format(parseISO(newerEntry.date + "T12:00:00Z"), "MMM d, yyyy")}
-                </span>
+                <span className="text-xs uppercase tracking-wide font-medium text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">Newer</span>
+                <span className="text-sm font-serif">{format(parseISO(newerEntry.date + "T12:00:00Z"), "MMM d, yyyy")}</span>
               </span>
               <ArrowRight className="h-4 w-4 flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
             </button>
-          ) : (
-            <div />
-          )}
+          ) : <div />}
         </div>
       )}
 
-      {/* Keyboard hint */}
       <div className="text-center">
         {!isEditing ? (
           <p className="text-xs text-muted-foreground/50 tracking-wide select-none">
@@ -319,7 +250,7 @@ export default function EntryDetail() {
           </p>
         ) : (
           <p className="text-xs text-muted-foreground/50 tracking-wide select-none">
-            Esc cancel  ·  {modKey} save
+            Esc cancel · {modKey} save
           </p>
         )}
       </div>

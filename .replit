@@ -34,7 +34,7 @@ externalPort = 3000
 [userenv]
 
 [userenv.shared]
-VITE_API_URL = "https://agent-mac-mini.tail12345.ts.net"
+VITE_API_URL = "https://26e8d07e-eb07-4c40-bb22-662e5f296e88-00-1g3iti7wdtpks.janeway.replit.dev"
 
 [nix]
 channel = "stable-25_05"

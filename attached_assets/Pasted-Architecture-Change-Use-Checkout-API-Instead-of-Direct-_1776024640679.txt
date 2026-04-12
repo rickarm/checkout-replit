@@ -1,0 +1,64 @@
+Architecture Change: Use Checkout API Instead of Direct Database
+The journal backend has moved to a separate Express API server that stores entries as markdown files in each user's Google Drive. PostgreSQL should only store OAuth tokens, not journal content.
+
+What to change
+1. Remove journal tables and repository
+
+Delete the journal_entries and journal_settings tables from PostgreSQL. Delete or stop using journalRepository.ts. Journal content will no longer live in the database — it lives in Google Drive as markdown files.
+
+2. Install the checkout backend
+
+Clone https://github.com/rickarm/checkout.git into this project (or add it as a dependency). The backend entry point is bin/api-server.js. It should be the server process that Replit runs.
+
+3. Set the run command to:
+
+node bin/api-server.js
+
+4. The backend needs these environment variables (set in Secrets):
+
+DATABASE_URL — the existing PostgreSQL connection string (already set)
+CLERK_SECRET_KEY — from Clerk dashboard
+GOOGLE_CLIENT_ID — Google OAuth client ID
+GOOGLE_CLIENT_SECRET — Google OAuth client secret
+GOOGLE_REDIRECT_URI — https://<this-replit-app>.replit.app/auth/google/callback
+CORS_ORIGIN — https://<this-replit-app>.replit.app
+APP_URL — https://<this-replit-app>.replit.app
+5. Replace all direct repository calls with fetch calls to the API:
+
+Old (direct DB)	New (API call)
+journalRepository.listEntries(userId)	GET /api/entries
+journalRepository.getEntry(userId, id)	GET /api/entries/:id
+journalRepository.createEntry(userId, data)	POST /api/entries with body { date, answers }
+journalRepository.updateEntry(userId, id, data)	PATCH /api/entries/:id with body { answers }
+Auth is handled automatically — the Clerk JWT from the frontend is sent as an Authorization: Bearer <token> header on every request. The backend verifies it and scopes data to that user.
+
+6. Add a Google Drive connect flow to the frontend
+
+Before a user can create entries, they need to connect their Google Drive. Check connection status and show a connect button:
+
+GET /auth/google/status
+→ { "connected": true/false, "folderId": "..." }
+
+If not connected, redirect the user to:
+
+GET /auth/google/connect
+→ redirects to Google consent screen → callback stores token → redirects back to app with ?drive=connected
+
+7. API response shapes
+
+Entry list (GET /api/entries):
+
+{ "entries": [{ "id": "2026-04-12-checkout-v1", "date": "2026-04-12", "templateId": "checkout-v1", "mtime": "..." }] }
+
+Entry detail (GET /api/entries/:id):
+
+{ "id": "...", "date": "...", "templateId": "...", "markdown": "...", "sections": [{ "title": "...", "content": "..." }], "metadata": {...}, "source": { "backend": "google-drive" } }
+
+Create (POST /api/entries):
+
+// Request: { "date": "2026-04-12", "answers": { "presence": "8", "joy": "Coffee", "values": "Curiosity", "letgo": "Worry" } }
+// Response (201): { "id": "2026-04-12-checkout-v1", "date": "2026-04-12", "templateId": "checkout-v1", "mtime": "..." }
+
+Error: { "error": "message", "details": [...] }
+
+8. Keep PostgreSQL — but it will only have one table (user_tokens) created automatically on first boot. The journal_entries and journal_settings tables are no longer needed.
