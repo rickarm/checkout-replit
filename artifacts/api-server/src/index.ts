@@ -21,5 +21,13 @@ app.listen(port, (err) => {
     process.exit(1);
   }
 
-  logger.info({ port }, "Server listening");
+  logger.info(
+    {
+      port,
+      NODE_ENV: process.env.NODE_ENV,
+      hasClerkSecretKey: !!process.env.CLERK_SECRET_KEY,
+      hasClerkPublishableKey: !!process.env.CLERK_PUBLISHABLE_KEY,
+    },
+    "Server listening",
+  );
 });
