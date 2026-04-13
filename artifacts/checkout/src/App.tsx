@@ -16,8 +16,13 @@ import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-// NOTE: in dev this env var will be empty, in prod it will be automatically set
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+// In production, derive the proxy URL from the current domain so it always
+// points to the right host regardless of which .replit.app URL is used.
+const clerkProxyUrl =
+  import.meta.env.VITE_CLERK_PROXY_URL ||
+  (import.meta.env.PROD
+    ? `${window.location.origin}/api/__clerk`
+    : undefined);
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 if (!clerkPubKey) {
