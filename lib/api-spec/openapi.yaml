@@ -244,7 +244,7 @@ components:
       properties:
         backend:
           type: string
-          enum: ["local", "google-drive", "mock"]
+          enum: ["local", "google-drive", "mock", "postgres"]
         path:
           type: string
       required:
@@ -307,7 +307,7 @@ components:
       properties:
         backend:
           type: string
-          enum: ["local", "google-drive", "mock"]
+          enum: ["local", "google-drive", "mock", "postgres"]
           default: "mock"
         localPath:
           type: string

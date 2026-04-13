@@ -5,7 +5,7 @@ export interface PromptAnswer {
 }
 
 export interface EntrySource {
-  backend: "local" | "google-drive" | "mock";
+  backend: "local" | "google-drive" | "mock" | "postgres";
   path?: string;
 }
 
@@ -29,7 +29,7 @@ export interface JournalSummary {
 }
 
 export interface StorageSettings {
-  backend: "local" | "google-drive" | "mock";
+  backend: "local" | "google-drive" | "mock" | "postgres";
   localPath?: string;
   googleDriveFolderId?: string;
   personalValues?: string[];

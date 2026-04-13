@@ -13,4 +13,5 @@ export const EntrySourceBackend = {
   local: "local",
   "google-drive": "google-drive",
   mock: "mock",
+  postgres: "postgres",
 } as const;

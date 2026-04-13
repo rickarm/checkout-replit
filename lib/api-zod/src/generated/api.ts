@@ -41,7 +41,7 @@ export const ListEntriesResponseItem = zod.object({
   createdAt: zod.string().describe("ISO timestamp"),
   updatedAt: zod.string().describe("ISO timestamp"),
   source: zod.object({
-    backend: zod.enum(["local", "google-drive", "mock"]),
+    backend: zod.enum(["local", "google-drive", "mock", "postgres"]),
     path: zod.string().optional(),
   }),
 });
@@ -88,7 +88,7 @@ export const GetEntryResponse = zod.object({
   createdAt: zod.string().describe("ISO timestamp"),
   updatedAt: zod.string().describe("ISO timestamp"),
   source: zod.object({
-    backend: zod.enum(["local", "google-drive", "mock"]),
+    backend: zod.enum(["local", "google-drive", "mock", "postgres"]),
     path: zod.string().optional(),
   }),
 });
@@ -128,7 +128,7 @@ export const UpdateEntryResponse = zod.object({
   createdAt: zod.string().describe("ISO timestamp"),
   updatedAt: zod.string().describe("ISO timestamp"),
   source: zod.object({
-    backend: zod.enum(["local", "google-drive", "mock"]),
+    backend: zod.enum(["local", "google-drive", "mock", "postgres"]),
     path: zod.string().optional(),
   }),
 });
@@ -156,7 +156,7 @@ export const getStorageSettingsResponseBackendDefault = `mock`;
 
 export const GetStorageSettingsResponse = zod.object({
   backend: zod
-    .enum(["local", "google-drive", "mock"])
+    .enum(["local", "google-drive", "mock", "postgres"])
     .default(getStorageSettingsResponseBackendDefault),
   localPath: zod.string().optional().describe("Path for local file storage"),
   googleDriveFolderId: zod
@@ -178,7 +178,7 @@ export const updateStorageSettingsBodyBackendDefault = `mock`;
 
 export const UpdateStorageSettingsBody = zod.object({
   backend: zod
-    .enum(["local", "google-drive", "mock"])
+    .enum(["local", "google-drive", "mock", "postgres"])
     .default(updateStorageSettingsBodyBackendDefault),
   localPath: zod.string().optional().describe("Path for local file storage"),
   googleDriveFolderId: zod
@@ -197,7 +197,7 @@ export const updateStorageSettingsResponseBackendDefault = `mock`;
 
 export const UpdateStorageSettingsResponse = zod.object({
   backend: zod
-    .enum(["local", "google-drive", "mock"])
+    .enum(["local", "google-drive", "mock", "postgres"])
     .default(updateStorageSettingsResponseBackendDefault),
   localPath: zod.string().optional().describe("Path for local file storage"),
   googleDriveFolderId: zod
