@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import path from "path";
 import { clerkMiddleware } from "@clerk/express";
 import { CLERK_PROXY_PATH, clerkProxyMiddleware } from "./middlewares/clerkProxyMiddleware.js";
 import router from "./routes";
@@ -37,5 +38,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
 app.use("/api", router);
+
+app.use(express.static(path.resolve(import.meta.dirname, "../../checkout/dist/public")));
+app.get("*", (_req, res) => {
+  res.sendFile(path.resolve(import.meta.dirname, "../../checkout/dist/public/index.html"));
+});
 
 export default app;

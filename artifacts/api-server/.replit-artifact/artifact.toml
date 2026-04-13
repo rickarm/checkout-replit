@@ -13,9 +13,10 @@ paths = ["/api", "/auth/google"]
 run = "PORT=8080 node /home/runner/workspace/artifacts/checkout-backend/bin/api-server.js"
 
 [services.production]
+build = ["pnpm", "run", "build"]
 
 [services.production.run]
-args = ["node", "/home/runner/workspace/artifacts/checkout-backend/bin/api-server.js"]
+args = ["node", "artifacts/api-server/dist/index.mjs"]
 
 [services.production.run.env]
 PORT = "8080"
