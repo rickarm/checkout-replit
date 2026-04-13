@@ -25,16 +25,17 @@ const CLERK_FAPI = "https://frontend-api.clerk.dev";
 export const CLERK_PROXY_PATH = "/api/__clerk";
 
 export function clerkProxyMiddleware(): RequestHandler {
-  if (process.env.NODE_ENV !== "production") {
-    return (_req, _res, next) => next();
-  }
+  return async (req, res, next) => {
+    if (process.env.NODE_ENV !== "production") {
+      return next();
+    }
 
-  const secretKey = process.env.CLERK_SECRET_KEY;
-  if (!secretKey) {
-    return (_req, _res, next) => next();
-  }
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (!secretKey) {
+      console.error("Clerk proxy: CLERK_SECRET_KEY not set, passing through");
+      return next();
+    }
 
-  return async (req, res) => {
     try {
       const protocol = req.headers["x-forwarded-proto"] || "https";
       const host = req.headers.host || "";
