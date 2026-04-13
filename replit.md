@@ -14,6 +14,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
+- `pnpm run build` — build all packages (checkout frontend + api-server + mockup-sandbox)
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
 
@@ -24,6 +25,8 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 ### Architecture Overview
 
 Checkout is a calm personal journaling web app built around an "Evening Checkout" prompt template with 4 daily reflection questions. Journal entries are stored as markdown files in the user's Google Drive via the `rickarm/checkout` backend.
+
+**Deployment model:** Autoscale on a single port (8080). The api-server serves both the API and the built React frontend as static files. In dev, the Vite dev server runs separately for hot reloading.
 
 ### Directory Layout
 
@@ -55,12 +58,15 @@ artifacts/
       templates/checkout-v1.json  # 4 questions: presence, joy, values, letgo
       storage/adapters/google-drive-adapter.js
 
-  api-server/                # Legacy TS backend — kept but superseded by checkout-backend
-                             # Artifact config now points to checkout-backend
+  api-server/                # TypeScript api-server — provides /api/health and /api/healthz
+                             # Production run command: node artifacts/api-server/dist/index.mjs
+                             # Serves checkout/dist/public as static files in production
+                             # Paths: /api, /auth/google (does NOT own /)
 
 lib/
   api-spec/                  # OpenAPI spec (legacy, not used by checkout-backend)
   api-client-react/          # Generated hooks (legacy, not used by new pages)
+  api-zod/                   # Zod schemas generated from OpenAPI spec
 ```
 
 ### API Contract (checkout-backend)
@@ -68,6 +74,7 @@ lib/
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/health` | GET | Health check (no auth) |
+| `/api/healthz` | GET | Health check alias (no auth) |
 | `/api/template` | GET | Fetch template questions (Clerk auth) |
 | `/api/entries` | GET | List entry summaries: `{ entries: [{id, date, templateId, mtime}] }` |
 | `/api/entries/:id` | GET | Entry detail: `{ sections: [{title, content}], markdown, ... }` |
@@ -85,20 +92,28 @@ lib/
 - `GOOGLE_REDIRECT_URI` — Must match Google Cloud Console: `<api-url>/auth/google/callback`
 - `CORS_ORIGIN` — Allowed frontend origin (set to deployed app URL)
 - `APP_URL` — Frontend URL for post-OAuth redirect
-
-### Environment Variables (shared)
-
-- `VITE_API_URL` — Base URL for API calls from the frontend. Set to the Replit dev domain. In production, the same Replit app domain serves both frontend and backend via path-based routing.
+- `VITE_CLERK_PUBLISHABLE_KEY` — Clerk frontend publishable key
 
 ### Authentication
 
 - Clerk handles user authentication (frontend: `@clerk/react`, backend: `@clerk/express`)
 - Frontend obtains a Clerk JWT via `getToken()` and sends it as `Authorization: Bearer <token>`
+- `VITE_CLERK_PROXY_URL` is set automatically in production by the Replit system
 - Public routes: `/` (landing), `/sign-in`, `/sign-up`
 - Protected routes: all journal pages — redirect to `/` if signed out
+- Google OAuth: must open in a new browser tab (iframe limitation)
 
 ### Database
 
 Replit PostgreSQL is used only by the `token-store` in the checkout backend to persist Google Drive refresh tokens per userId. The `user_tokens` table is created automatically by `TokenStore.initialize()`.
 
 Dropped tables (no longer used): `journal_entries`, `journal_settings`.
+
+### Key Technical Notes
+
+- **Express 5**: Uses `/{*splat}` syntax for catch-all routes (not `*`)
+- **Import**: Always use `@clerk/react` (not `@clerk/clerk-react`)
+- **Vite config**: PORT and BASE_PATH have sensible defaults; no hard throws
+- **API client**: `api.ts` uses relative URLs (`BASE = ""`) — do NOT set VITE_API_URL
+- **Production static files**: Vite outputs to `artifacts/checkout/dist/public`; api-server serves from `../../checkout/dist/public` relative to its source
+- **api-server artifact.toml paths**: `["/api", "/auth/google"]` only — must NOT include `/` to avoid stealing traffic from the checkout web artifact
