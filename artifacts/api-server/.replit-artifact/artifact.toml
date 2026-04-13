@@ -7,7 +7,6 @@ id = "3B4_FFSkEVBkAeYMFRJ2e"
 [[services]]
 localPort = 8080
 name = "API Server"
-paths = ["/api", "/auth/google"]
 
 [services.development]
 run = "PORT=8080 node /home/runner/workspace/artifacts/checkout-backend/bin/api-server.js"
