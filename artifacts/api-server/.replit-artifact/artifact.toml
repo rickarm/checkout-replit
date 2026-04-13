@@ -11,14 +11,3 @@ paths = ["/api", "/auth/google"]
 
 [services.development]
 run = "PORT=8080 node /home/runner/workspace/artifacts/checkout-backend/bin/api-server.js"
-
-[services.production]
-build = ["pnpm", "run", "build"]
-run = ["node", "artifacts/api-server/dist/index.mjs"]
-
-[services.production.env]
-PORT = "8080"
-NODE_ENV = "production"
-
-[services.production.health.startup]
-path = "/api/health"
