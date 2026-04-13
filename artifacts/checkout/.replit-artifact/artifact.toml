@@ -17,17 +17,6 @@ localPort = 25227
 [services.development]
 run = "pnpm --filter @workspace/checkout run dev"
 
-[services.production]
-build = ["pnpm", "run", "build"]
-run = ["node", "artifacts/api-server/dist/index.mjs"]
-
-[services.production.env]
-PORT = "8080"
-NODE_ENV = "production"
-
-[services.production.health.startup]
-path = "/api/health"
-
 [services.env]
 PORT = "25227"
 BASE_PATH = "/"
