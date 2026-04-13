@@ -1,24 +1,22 @@
 kind = "api"
 previewPath = "/api"
-title = "API Server"
+title = "Checkout"
 version = "1.0.0"
 id = "3B4_FFSkEVBkAeYMFRJ2e"
 
 [[services]]
 localPort = 8080
 name = "API Server"
-paths = ["/api", "/auth/google"]
+paths = ["/api", "/auth/google", "/"]
 
 [services.development]
 run = "PORT=8080 node /home/runner/workspace/artifacts/checkout-backend/bin/api-server.js"
 
 [services.production]
 build = ["pnpm", "run", "build"]
+run = ["node", "artifacts/api-server/dist/index.mjs"]
 
-[services.production.run]
-args = ["node", "artifacts/api-server/dist/index.mjs"]
-
-[services.production.run.env]
+[services.production.env]
 PORT = "8080"
 NODE_ENV = "production"
 
