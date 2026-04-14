@@ -5,6 +5,7 @@ import path from "path";
 import { clerkMiddleware } from "@clerk/express";
 import { CLERK_PROXY_PATH, clerkProxyMiddleware } from "./middlewares/clerkProxyMiddleware.js";
 import router from "./routes";
+import googleAuthRouter from "./routes/google-auth.js";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
@@ -38,6 +39,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
 app.use("/api", router);
+app.use("/auth/google", googleAuthRouter);
 
 app.use(express.static(path.resolve(import.meta.dirname, "../../checkout/dist/public")));
 app.get("/{*splat}", (_req, res) => {
