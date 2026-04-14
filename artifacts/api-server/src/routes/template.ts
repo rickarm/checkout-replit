@@ -1,0 +1,68 @@
+import { Router, Request, Response, NextFunction } from "express";
+import { getAuth } from "@clerk/express";
+
+export const templateRouter = Router();
+
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const auth = getAuth(req);
+  const userId = auth?.userId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  next();
+}
+
+const checkoutV1Template = {
+  id: "checkout-v1",
+  name: "Evening Checkout",
+  description:
+    "End-of-day reflection on presence, joy, values, and letting go",
+  questions: [
+    {
+      id: "presence",
+      order: 1,
+      title: "How present do you feel right now?",
+      prompt: "Rate your sense of presence on a scale of 1-10.",
+      example: null,
+      required: true,
+      type: "number",
+      min: 1,
+      max: 10,
+    },
+    {
+      id: "joy",
+      order: 2,
+      title: "Your joy-moment",
+      prompt: "Give one specific moment of joy from today.",
+      example: "e.g. first sip of coffee, funny text, smell from walk",
+      required: true,
+      type: "text",
+    },
+    {
+      id: "values",
+      order: 3,
+      title: "Think of your values",
+      prompt:
+        "Your values: Curiosity, Influence, Compassion, Determination, Authenticity.\nThink of an action you did today that aligns with any of them.",
+      example:
+        "e.g. Compassion: listened without fixing when Sheila vented; Curiosity: went deep on a new idea with a client",
+      required: true,
+      type: "text",
+    },
+    {
+      id: "letgo",
+      order: 4,
+      title: "What do you decide to let go of?",
+      prompt: "Release something that no longer serves you.",
+      example: "e.g. anger with my investors, fear of failure",
+      required: false,
+      type: "text",
+    },
+  ],
+};
+
+// GET /template — returns the checkout-v1 template
+templateRouter.get("/template", requireAuth, (_req, res) => {
+  res.json(checkoutV1Template);
+});

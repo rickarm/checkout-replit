@@ -1,5 +1,7 @@
 modules = ["nodejs-24", "postgresql-16"]
 
+run = ["sh", "-c", "pnpm run build && node artifacts/api-server/dist/index.mjs"]
+
 [deployment]
 router = "application"
 deploymentTarget = "autoscale"
